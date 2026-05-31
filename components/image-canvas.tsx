@@ -29,6 +29,8 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
     // Add this hook inside image-canvas.tsx
     const grainCanvasRef = useRef<HTMLCanvasElement>(null)
 
+    const grainFrameRef = useRef<number>(0)
+
     useEffect(() => {
         const canvas = grainCanvasRef.current
         if (!canvas) return
@@ -39,16 +41,23 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         canvas.width = size
         canvas.height = size
 
-        const imageData = ctx.createImageData(size, size)
-        for (let i = 0; i < imageData.data.length; i += 4) {
-            const val = Math.random() * 255
-            imageData.data[i] = val
-            imageData.data[i + 1] = val
-            imageData.data[i + 2] = val
-            imageData.data[i + 3] = 255
+        const drawGrain = () => {
+            const imageData = ctx.createImageData(size, size)
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                const val = Math.random() * 255
+                imageData.data[i] = val
+                imageData.data[i + 1] = val
+                imageData.data[i + 2] = val
+                imageData.data[i + 3] = 255
+            }
+            ctx.putImageData(imageData, 0, 0)
+            grainFrameRef.current = requestAnimationFrame(drawGrain)
         }
-        ctx.putImageData(imageData, 0, 0)
-    }, [])
+
+        drawGrain()
+
+        return () => cancelAnimationFrame(grainFrameRef.current)
+    }, [image])
 
 
     useEffect(() => {
@@ -185,7 +194,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     style={{
                                         width: `${canvasWidth}px`,
                                         maxWidth: "none",
-                                      background: `radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,${(adjustments.vignette / 100) * 1.8}) 75%, rgba(0,0,0,${(adjustments.vignette / 100) * 2.2}) 100%)`,
+                                        background: `radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,${(adjustments.vignette / 100) * 1.8}) 75%, rgba(0,0,0,${(adjustments.vignette / 100) * 2.2}) 100%)`,
                                     }}
                                 />
                             )}

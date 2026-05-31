@@ -53,14 +53,13 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
 
         const imageData = ctx.createImageData(size, size)
         for (let i = 0; i < imageData.data.length; i += 4) {
-            const val = Math.random() * 255
+            const val = 100 + Math.random() * 80
             imageData.data[i] = val
             imageData.data[i + 1] = val
             imageData.data[i + 2] = val
             imageData.data[i + 3] = 255
         }
         ctx.putImageData(imageData, 0, 0)
-        // no requestAnimationFrame = no movement
     }, [image])
 
     const handleFile = useCallback((file: File) => {
@@ -187,8 +186,8 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     width: `${canvasWidth}px`,
                                     maxWidth: "none",
                                     height: "100%",
-                                    opacity: adjustments.grain > 0 ? (adjustments.grain / 100) * 2.5 : 0,
-                                    mixBlendMode: "overlay",
+                                    opacity: adjustments.grain > 0 ? (adjustments.grain / 100) * 1.5 : 0,
+                                    mixBlendMode: "soft-light",
                                     imageRendering: "pixelated",
                                     transition: "opacity 0.2s",
                                 }}

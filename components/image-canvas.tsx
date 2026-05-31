@@ -18,7 +18,7 @@ const FILM_PRESETS = [
 export function ImageCanvas() {
     const [image, setImage] = useState<string | null>(null)
     const [fileName, setFileName] = useState<string>("")
-    const [zoom, setZoom] = useState(100)
+    const [zoom, setZoom] = useState(25)
     const [splitPos, setSplitPos] = useState(50) // percentage
     const [isDraggingSplit, setIsDraggingSplit] = useState(false)
     const [isDraggingOver, setIsDraggingOver] = useState(false)
@@ -240,7 +240,7 @@ export function ImageCanvas() {
                             onClick={() => setSelectedPreset(preset.id)}
                             className={`flex flex-col items-center gap-2 shrink-0 group transition-all ${selectedPreset === preset.id ? "opacity-100" : "opacity-50 hover:opacity-80"}`}
                         >
-                            <div className={`w-16 h-16 rounded-lg border flex items-center justify-center text-2xl transition-all ${selectedPreset === preset.id ? "border-white/40 bg-white/10" : "border-white/10 bg-white/5 group-hover:border-white/20"}`}>
+                            <div className={`w-20 h-20 rounded-lg border flex items-center justify-center text-2xl transition-all ${selectedPreset === preset.id ? "border-white/40 bg-white/10" : "border-white/10 bg-white/5 group-hover:border-white/20"}`}>
                                 {preset.icon}
                             </div>
                             <span className={`text-[10px] font-medium tracking-wide whitespace-nowrap transition-colors ${selectedPreset === preset.id ? "text-white/90" : "text-white/40"}`}>

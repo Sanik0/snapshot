@@ -106,7 +106,27 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
 
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
-
+            {/* SVG filters for fisheye and sharpness — hidden */}
+            <svg width="0" height="0" className="absolute">
+                <defs>
+                    <filter id="fisheye-filter">
+                        <feDisplacementMap
+                            in="SourceGraphic"
+                            scale={adjustments.fisheye * 2}
+                            xChannelSelector="R"
+                            yChannelSelector="G"
+                        >
+                            <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="noise" />
+                        </feDisplacementMap>
+                    </filter>
+                    <filter id="sharpen-filter">
+                        <feConvolveMatrix
+                            order="3"
+                            kernelMatrix={`0 ${-adjustments.sharpness / 100} 0 ${-adjustments.sharpness / 100} ${1 + (adjustments.sharpness / 100) * 4} ${-adjustments.sharpness / 100} 0 ${-adjustments.sharpness / 100} 0`}
+                        />
+                    </filter>
+                </defs>
+            </svg>
             {fileName && (
                 <div className="px-4 py-2 flex items-center justify-between border-b border-white/10">
                     <span className="text-xs text-white/50">{fileName}</span>
@@ -173,7 +193,11 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                 style={{
                                     width: `${canvasWidth}px`,
                                     maxWidth: "none",
-                                    filter: liveFilter,
+                                    filter: [
+                                        liveFilter,
+                                        adjustments.sharpness > 0 ? "url(#sharpen-filter)" : "",
+                                        adjustments.fisheye > 0 ? "url(#fisheye-filter)" : "",
+                                    ].filter(Boolean).join(" "),
                                 }}
                                 draggable={false}
                             />

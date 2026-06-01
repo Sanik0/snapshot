@@ -5,7 +5,14 @@ import { ImageCanvas } from "@/components/image-canvas"
 import { Sidebar } from "@/components/sidebar"
 import { FILM_PRESETS, buildFilter, type Preset } from "@/lib/presets"
 
-type Adjustments = Preset["adjustments"] & { vignette: number }
+type Adjustments = Preset["adjustments"] & {
+  vignette: number
+  sharpness: number
+  blur: number
+  fisheye: number
+  fade: number
+  hue: number
+}
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -13,14 +20,28 @@ export default function Home() {
   const [adjustments, setAdjustments] = useState<Adjustments>({
     ...FILM_PRESETS[0].adjustments,
     vignette: 0,
+    sharpness: 0,
+    blur: 0,
+    fisheye: 0,
+    fade: 0,
+    hue: 0,
   })
+
 
   // Recompute CSS filter whenever any slider moves
   const liveFilter = useMemo(() => buildFilter(adjustments), [adjustments])
 
   const handlePresetChange = (preset: Preset) => {
     setActivePreset(preset)
-    setAdjustments({ ...preset.adjustments, vignette: 0 })
+    setAdjustments({
+      ...preset.adjustments,
+      vignette: 0,
+      sharpness: 0,
+      blur: 0,
+      fisheye: 0,
+      fade: 0,
+      hue: 0,
+    })
   }
 
   const handleAdjustmentChange = (key: keyof Adjustments, val: number) => {

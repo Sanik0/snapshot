@@ -314,6 +314,32 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                 />
                             )}
 
+                            {/* Light Leak */}
+                            {adjustments.lightLeakOpacity > 0 && (() => {
+                                const pos = adjustments.lightLeakPosition
+                                const gradientMap: Record<string, string> = {
+                                    "top-right": `radial-gradient(ellipse at 100% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                    "top-left": `radial-gradient(ellipse at 0% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                    "bottom-right": `radial-gradient(ellipse at 100% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                    "bottom-left": `radial-gradient(ellipse at 0% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                    "center-left": `radial-gradient(ellipse at 0% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
+                                    "center-right": `radial-gradient(ellipse at 100% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
+                                    "horizontal": `linear-gradient(to bottom, transparent 20%, ${adjustments.lightLeakColor}99 45%, ${adjustments.lightLeakColor} 50%, ${adjustments.lightLeakColor}99 55%, transparent 80%)`,
+                                }
+                                return (
+                                    <div
+                                        className="absolute inset-0 pointer-events-none z-20"
+                                        style={{
+                                            width: `${canvasWidth}px`,
+                                            maxWidth: "none",
+                                            background: gradientMap[pos] ?? gradientMap["top-right"],
+                                            opacity: adjustments.lightLeakOpacity / 100,
+                                            mixBlendMode: "screen",
+                                        }}
+                                    />
+                                )
+                            })()}
+
                             {/* Vignette — always mounted */}
                             <div
                                 className="absolute inset-0 pointer-events-none"

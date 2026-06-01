@@ -12,6 +12,9 @@ type Adjustments = Preset["adjustments"] & {
   fisheye: number
   fade: number
   hue: number
+  lightLeakOpacity: number
+  lightLeakColor: string
+  lightLeakPosition: string
 }
 
 export default function Home() {
@@ -25,6 +28,9 @@ export default function Home() {
     fisheye: 0,
     fade: 0,
     hue: 0,
+    lightLeakOpacity: 0,
+    lightLeakColor: "#ff6600",
+    lightLeakPosition: "top-right",
   })
 
 
@@ -44,15 +50,14 @@ export default function Home() {
     })
   }
 
-  const handleAdjustmentChange = (key: keyof Adjustments, val: number) => {
+  const handleAdjustmentChange = (key: keyof Adjustments, val: number | string) => {
     setAdjustments(prev => ({ ...prev, [key]: val }))
   }
-
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <main className="w-full overflow-hidden">
         <nav className="bg-neutral-primary px-0 md:px-4 flex w-full border-b border-white/30">
-          <div className="w-full flex flex-wrap items-center justify-between mx-auto p-4">
+          <div className="w-full flex flex-wrap gap-5 items-center justify-between mx-auto p-4">
             <a href="https://flowbite.com/" className="flex items-center space-x-3 rtl:space-x-reverse">
               <img src="https://flowbite.com/docs/images/logo.svg" className="h-7" alt="Flowbite Logo" />
               <span className="self-center text-xl text-heading font-semibold whitespace-nowrap">SnapShot</span>
@@ -82,7 +87,7 @@ export default function Home() {
               <div className="fixed inset-0 bg-black/60 z-20 md:hidden" onClick={() => setSidebarOpen(false)} />
             )}
             <div className={`
-              h-full flex flex-col w-72 shrink-0 bg-neutral-primary border-l border-white/10 overflow-y-auto scrollbar-none
+              h-full flex flex-col bg-black w-72 shrink-0 bg-neutral-primary border-l border-white/10 overflow-y-auto scrollbar-none
               md:relative md:translate-x-0 md:z-auto
               fixed right-0 top-0 z-30 transition-transform duration-300 ease-in-out
               ${sidebarOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}

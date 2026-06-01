@@ -130,15 +130,28 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             }
             ctx.putImageData(dst, 0, 0)
 
-            // Clip to smooth circle with feathered edge
+            // Fill entire canvas black first
+            ctx.globalCompositeOperation = "destination-over"
+            ctx.fillStyle = "black"
+            ctx.fillRect(0, 0, w, h)
+            ctx.globalCompositeOperation = "source-over"
+
+            // Soft feathered circle mask — fades into black at edges
             ctx.globalCompositeOperation = "destination-in"
-            const gradient = ctx.createRadialGradient(cx, cy, radius * 0.85, cx, cy, radius)
-            gradient.addColorStop(0, "rgba(0,0,0,1)")
-            gradient.addColorStop(1, "rgba(0,0,0,0)")
+            const gradient = ctx.createRadialGradient(cx, cy, radius * 0.75, cx, cy, radius * 0.98)
+            gradient.addColorStop(0, "rgba(0,0,0,1)")   // fully visible in center
+            gradient.addColorStop(0.7, "rgba(0,0,0,1)") // still fully visible
+            gradient.addColorStop(1, "rgba(0,0,0,0)")   // fades out at edge
             ctx.fillStyle = gradient
             ctx.beginPath()
-            ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+            ctx.arc(cx, cy, radius * 0.98, 0, Math.PI * 2)
             ctx.fill()
+            ctx.globalCompositeOperation = "source-over"
+
+            // Final black background so outside circle is pure black not transparent
+            ctx.globalCompositeOperation = "destination-over"
+            ctx.fillStyle = "#000000"
+            ctx.fillRect(0, 0, w, h)
             ctx.globalCompositeOperation = "source-over"
         }
         img.src = image

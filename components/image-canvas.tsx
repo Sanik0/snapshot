@@ -77,7 +77,6 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             canvas.width = w
             canvas.height = h
 
-            // Draw original to offscreen
             const off = document.createElement("canvas")
             off.width = w
             off.height = h
@@ -86,36 +85,61 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             const src = offCtx.getImageData(0, 0, w, h)
             const dst = ctx.createImageData(w, h)
 
-            const strength = (adjustments.fisheye / 100) * 1.5
+            const strength = (adjustments.fisheye / 100) * 1.2
             const cx = w / 2
             const cy = h / 2
             const radius = Math.min(w, h) / 2
 
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
-                    // Normalize to -1..1
                     const nx = (x - cx) / radius
                     const ny = (y - cy) / radius
                     const r = Math.sqrt(nx * nx + ny * ny)
+                    const dstIdx = (y * w + x) * 4
 
-                    // Barrel distortion formula
+                    // Outside the circle — pure black
+                    if (r > 1) {
+                        dst.data[dstIdx] = 0
+                        dst.data[dstIdx + 1] = 0
+                        dst.data[dstIdx + 2] = 0
+                        dst.data[dstIdx + 3] = 255
+                        continue
+                    }
+
+                    // Barrel distortion
                     const distorted = r === 0 ? 0 : (Math.tan(r * strength) / (Math.tan(strength) || 1))
                     const angle = Math.atan2(ny, nx)
 
                     const srcX = Math.round(cx + distorted * Math.cos(angle) * radius)
                     const srcY = Math.round(cy + distorted * Math.sin(angle) * radius)
 
-                    const dstIdx = (y * w + x) * 4
                     if (srcX >= 0 && srcX < w && srcY >= 0 && srcY < h) {
                         const srcIdx = (srcY * w + srcX) * 4
                         dst.data[dstIdx] = src.data[srcIdx]
                         dst.data[dstIdx + 1] = src.data[srcIdx + 1]
                         dst.data[dstIdx + 2] = src.data[srcIdx + 2]
                         dst.data[dstIdx + 3] = src.data[srcIdx + 3]
+                    } else {
+                        // Out of bounds — black
+                        dst.data[dstIdx] = 0
+                        dst.data[dstIdx + 1] = 0
+                        dst.data[dstIdx + 2] = 0
+                        dst.data[dstIdx + 3] = 255
                     }
                 }
             }
             ctx.putImageData(dst, 0, 0)
+
+            // Clip to smooth circle with feathered edge
+            ctx.globalCompositeOperation = "destination-in"
+            const gradient = ctx.createRadialGradient(cx, cy, radius * 0.85, cx, cy, radius)
+            gradient.addColorStop(0, "rgba(0,0,0,1)")
+            gradient.addColorStop(1, "rgba(0,0,0,0)")
+            ctx.fillStyle = gradient
+            ctx.beginPath()
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+            ctx.fill()
+            ctx.globalCompositeOperation = "source-over"
         }
         img.src = image
     }, [image, adjustments.fisheye])

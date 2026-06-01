@@ -20,12 +20,14 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
     const [imageDimensions, setImageDimensions] = useState({ w: 0, h: 0 })
     const [canvasWidth, setCanvasWidth] = useState(0)
 
+
     const canvasRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const carouselRef = useRef<HTMLDivElement>(null)
     const grainCanvasRef = useRef<HTMLCanvasElement>(null)
     const grainFrameRef = useRef<number>(0)
     const frameCountRef = useRef<number>(0)
+    const fisheyeCanvasRef = useRef<HTMLCanvasElement>(null)
 
     useEffect(() => {
         const isMobile = window.innerWidth < 768
@@ -61,6 +63,62 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         }
         ctx.putImageData(imageData, 0, 0)
     }, [image])
+
+    useEffect(() => {
+        const canvas = fisheyeCanvasRef.current
+        if (!canvas || !image || adjustments.fisheye <= 0) return
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return
+
+        const img = new Image()
+        img.onload = () => {
+            const w = img.naturalWidth
+            const h = img.naturalHeight
+            canvas.width = w
+            canvas.height = h
+
+            // Draw original to offscreen
+            const off = document.createElement("canvas")
+            off.width = w
+            off.height = h
+            const offCtx = off.getContext("2d")!
+            offCtx.drawImage(img, 0, 0)
+            const src = offCtx.getImageData(0, 0, w, h)
+            const dst = ctx.createImageData(w, h)
+
+            const strength = (adjustments.fisheye / 100) * 1.5
+            const cx = w / 2
+            const cy = h / 2
+            const radius = Math.min(w, h) / 2
+
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    // Normalize to -1..1
+                    const nx = (x - cx) / radius
+                    const ny = (y - cy) / radius
+                    const r = Math.sqrt(nx * nx + ny * ny)
+
+                    // Barrel distortion formula
+                    const distorted = r === 0 ? 0 : (Math.tan(r * strength) / (Math.tan(strength) || 1))
+                    const angle = Math.atan2(ny, nx)
+
+                    const srcX = Math.round(cx + distorted * Math.cos(angle) * radius)
+                    const srcY = Math.round(cy + distorted * Math.sin(angle) * radius)
+
+                    const dstIdx = (y * w + x) * 4
+                    if (srcX >= 0 && srcX < w && srcY >= 0 && srcY < h) {
+                        const srcIdx = (srcY * w + srcX) * 4
+                        dst.data[dstIdx] = src.data[srcIdx]
+                        dst.data[dstIdx + 1] = src.data[srcIdx + 1]
+                        dst.data[dstIdx + 2] = src.data[srcIdx + 2]
+                        dst.data[dstIdx + 3] = src.data[srcIdx + 3]
+                    }
+                }
+            }
+            ctx.putImageData(dst, 0, 0)
+        }
+        img.src = image
+    }, [image, adjustments.fisheye])
 
     const handleFile = useCallback((file: File) => {
         if (!file.type.startsWith("image/")) return
@@ -106,27 +164,6 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
 
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
-            {/* SVG filters for fisheye and sharpness — hidden */}
-            <svg width="0" height="0" className="absolute">
-                <defs>
-                    <filter id="fisheye-filter">
-                        <feDisplacementMap
-                            in="SourceGraphic"
-                            scale={adjustments.fisheye * 2}
-                            xChannelSelector="R"
-                            yChannelSelector="G"
-                        >
-                            <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="noise" />
-                        </feDisplacementMap>
-                    </filter>
-                    <filter id="sharpen-filter">
-                        <feConvolveMatrix
-                            order="3"
-                            kernelMatrix={`0 ${-adjustments.sharpness / 100} 0 ${-adjustments.sharpness / 100} ${1 + (adjustments.sharpness / 100) * 4} ${-adjustments.sharpness / 100} 0 ${-adjustments.sharpness / 100} 0`}
-                        />
-                    </filter>
-                </defs>
-            </svg>
             {fileName && (
                 <div className="px-4 py-2 flex items-center justify-between border-b border-white/10">
                     <span className="text-xs text-white/50">{fileName}</span>
@@ -182,10 +219,12 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                         />
 
                         {/* Edited side */}
+                        {/* Edited side */}
                         <div
                             className="absolute inset-0 overflow-hidden pointer-events-none"
                             style={{ width: `${splitPos}%` }}
                         >
+                            {/* Regular filtered image — hide when fisheye active */}
                             <img
                                 src={image}
                                 alt="edited"
@@ -193,13 +232,22 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                 style={{
                                     width: `${canvasWidth}px`,
                                     maxWidth: "none",
-                                    filter: [
-                                        liveFilter,
-                                        adjustments.sharpness > 0 ? "url(#sharpen-filter)" : "",
-                                        adjustments.fisheye > 0 ? "url(#fisheye-filter)" : "",
-                                    ].filter(Boolean).join(" "),
+                                    filter: liveFilter,
+                                    display: adjustments.fisheye > 0 ? "none" : "block",
                                 }}
                                 draggable={false}
+                            />
+
+                            {/* Fisheye canvas — only shows when fisheye > 0 */}
+                            <canvas
+                                ref={fisheyeCanvasRef}
+                                className="absolute inset-0 h-full object-cover object-left pointer-events-none"
+                                style={{
+                                    width: `${canvasWidth}px`,
+                                    maxWidth: "none",
+                                    filter: liveFilter,
+                                    display: adjustments.fisheye > 0 ? "block" : "none",
+                                }}
                             />
 
                             {/* Grain — always mounted */}
@@ -210,12 +258,24 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     width: `${canvasWidth}px`,
                                     maxWidth: "none",
                                     height: "100%",
-                                    opacity: adjustments.grain > 0 ? (adjustments.grain / 100) * 1.5 : 0,
+                                    opacity: adjustments.grain > 0 ? (adjustments.grain / 100) * 0.9 : 0,
                                     mixBlendMode: "soft-light",
                                     imageRendering: "pixelated",
                                     transition: "opacity 0.2s",
                                 }}
                             />
+
+                            {/* Fisheye circle vignette */}
+                            {adjustments.fisheye > 0 && (
+                                <div
+                                    className="absolute inset-0 pointer-events-none z-10"
+                                    style={{
+                                        width: `${canvasWidth}px`,
+                                        maxWidth: "none",
+                                        background: `radial-gradient(ellipse at center, transparent ${55 - adjustments.fisheye * 0.3}%, rgba(0,0,0,0.6) ${75 - adjustments.fisheye * 0.2}%, rgba(0,0,0,0.95) 100%)`,
+                                    }}
+                                />
+                            )}
 
                             {/* Vignette — always mounted */}
                             <div

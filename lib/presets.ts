@@ -51,9 +51,9 @@ export const FILM_PRESETS: Preset[] = [
     name: "Classic M",
     image: "/presets/classic-m.jpg",
     adjustments: {
-      temperature: -10, tint: 5, exposure: -15, contrast: 20,
-      highlight: -20, shadows: 15, saturation: -30, grain: 60,
-      sharpness: 0, blur: 0, fisheye: 0, fade: 0, hue: 0,
+      temperature: 100, tint: 5, exposure: 11, contrast: 22,
+      highlight: -20, shadows: 43, saturation: 47, grain: 100,
+      sharpness: 60, blur: 0, fisheye: 0, fade: 0, hue: 0,
       lightLeakOpacity: 0,
       lightLeakColor: "#ff6600",
       lightLeakPosition: "top-right",

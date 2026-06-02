@@ -43,20 +43,11 @@ export default function Home() {
 
   // Recompute CSS filter whenever any slider moves
   const liveFilter = useMemo(() => buildFilter(adjustments), [adjustments])
-
   const handlePresetChange = (preset: Preset) => {
     setActivePreset(preset)
     setAdjustments({
       ...preset.adjustments,
       vignette: 0,
-      sharpness: 0,
-      blur: 0,
-      fisheye: 0,
-      fade: 0,
-      hue: 0,
-      dust: 0,
-      dateStamp: false,
-      dateStampColor: "#ff8800",
     })
   }
 

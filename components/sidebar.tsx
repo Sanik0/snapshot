@@ -174,7 +174,7 @@ export function Sidebar({
     adjustments, onChange,
 }: {
     adjustments: Adjustments
-    onChange: (key: keyof Adjustments, val: number | string) => void
+    onChange: (key: keyof Adjustments, val: number | string | boolean) => void
 }) {
     return (
         <>
@@ -289,6 +289,60 @@ export function Sidebar({
                             </button>
                         ))}
                     </div>
+                </div>
+            </SidebarSection>
+
+            <SidebarSection title="Film Effects">
+                <SidebarGroup label="DUST & SCRATCHES">
+                    <SliderRow
+                        label="Amount"
+                        value={adjustments.dust}
+                        min={0} max={100}
+                        trackClass="bg-gradient-to-r from-white/10 to-white/50"
+                        onChange={v => onChange("dust", v)}
+                    />
+                </SidebarGroup>
+
+                <div className="px-4 pb-4">
+                    <p className="text-[10px] font-semibold tracking-widest text-white/30 uppercase mb-3">Date Stamp</p>
+
+                    {/* Toggle */}
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs text-white/60">Show date</span>
+                        <div
+                            className="cursor-pointer"
+                            onClick={() => onChange("dateStamp", !adjustments.dateStamp)}
+                        >
+                            <div className={`w-9 h-5 rounded-full border transition-all relative ${adjustments.dateStamp ? "bg-white/20 border-white/40" : "bg-transparent border-white/20"}`}>
+                                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${adjustments.dateStamp ? "left-4" : "left-0.5"}`} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Color swatches */}
+                    {adjustments.dateStamp && (
+                        <div className="flex gap-2 flex-wrap">
+                            {[
+                                { color: "#ff8800", label: "Orange" },
+                                { color: "#ffcc00", label: "Yellow" },
+                                { color: "#ff4444", label: "Red" },
+                                { color: "#ffffff", label: "White" },
+                                { color: "#88ff44", label: "Green" },
+                            ].map(({ color, label }) => (
+                                <button
+                                    key={color}
+                                    title={label}
+                                    onClick={() => onChange("dateStampColor", color)}
+                                    className="w-7 h-7 rounded-full border-2 transition-all"
+                                    style={{
+                                        background: color,
+                                        borderColor: adjustments.dateStampColor === color ? "white" : "transparent",
+                                        boxShadow: adjustments.dateStampColor === color ? `0 0 8px ${color}` : "none",
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </SidebarSection>
         </>

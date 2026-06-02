@@ -15,6 +15,10 @@ type Adjustments = Preset["adjustments"] & {
   lightLeakOpacity: number
   lightLeakColor: string
   lightLeakPosition: string
+  dust: number
+  dateStamp: boolean
+  dateStampColor: string
+
 }
 
 export default function Home() {
@@ -31,6 +35,9 @@ export default function Home() {
     lightLeakOpacity: 0,
     lightLeakColor: "#ff6600",
     lightLeakPosition: "top-right",
+    dust: 0,
+    dateStamp: false,
+    dateStampColor: "#ff8800",
   })
 
 
@@ -47,10 +54,13 @@ export default function Home() {
       fisheye: 0,
       fade: 0,
       hue: 0,
+      dust: 0,
+      dateStamp: false,
+      dateStampColor: "#ff8800",
     })
   }
 
-  const handleAdjustmentChange = (key: keyof Adjustments, val: number | string) => {
+  const handleAdjustmentChange = (key: keyof Adjustments, val: number | string | boolean) => {
     setAdjustments(prev => ({ ...prev, [key]: val }))
   }
   return (

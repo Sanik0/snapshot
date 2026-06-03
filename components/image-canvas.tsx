@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import { FILM_PRESETS, type Preset } from "@/lib/presets"
+import { applyCanvasFilter } from "@/lib/presets"
 
 interface ImageCanvasProps {
     activePreset: Preset
@@ -31,6 +32,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
     const fisheyeCanvasRef = useRef<HTMLCanvasElement>(null)
     const dustCanvasRef = useRef<HTMLCanvasElement>(null)
     const sharpCanvasRef = useRef<HTMLCanvasElement>(null)
+    const imageElementRef = useRef<HTMLImageElement | null>(null)
 
     useEffect(() => {
         const isMobile = window.innerWidth < 768
@@ -269,9 +271,12 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         reader.onload = (e) => {
             const src = e.target?.result as string
             const img = new Image()
-            img.onload = () => setImageDimensions({ w: img.naturalWidth, h: img.naturalHeight })
-            img.src = src
-            setImage(src)
+            img.onload = () => {
+                setImageDimensions({ w: img.naturalWidth, h: img.naturalHeight })
+                imageElementRef.current = img
+                setImage(src)
+            }
+            img.src = src  // 👈 this line was missing
         }
         reader.readAsDataURL(file)
     }, [])
@@ -298,6 +303,31 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             window.removeEventListener("mouseup", onMouseUp)
         }
     }, [isDraggingSplit])
+
+    const processedCanvasRef = useRef<HTMLCanvasElement>(null)
+
+    useEffect(() => {
+        if (!image) return
+        const img = imageElementRef.current
+        if (!img || !processedCanvasRef.current) return
+        if (!adjustments.sepiaRemap) return
+
+        const run = () => {
+            if (!processedCanvasRef.current) return
+            const result = applyCanvasFilter(img, adjustments)
+            const ctx = processedCanvasRef.current.getContext("2d")
+            if (!ctx) return
+            processedCanvasRef.current.width = result.width
+            processedCanvasRef.current.height = result.height
+            ctx.drawImage(result, 0, 0)
+        }
+
+        if (img.complete && img.naturalWidth > 0) {
+            run()
+        } else {
+            img.onload = run
+        }
+    }, [adjustments, image])
 
     const scrollCarousel = (dir: "left" | "right") => {
         if (!carouselRef.current) return
@@ -365,19 +395,38 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                             className="absolute inset-0 overflow-hidden pointer-events-none"
                             style={{ width: `${splitPos}%` }}
                         >
-                            {/* Regular filtered image — hide when fisheye active */}
-                            <img
-                                src={image}
-                                alt="edited"
-                                className="absolute inset-0 h-full object-cover object-left"
-                                style={{
-                                    width: `${canvasWidth}px`,
-                                    maxWidth: "none",
-                                    filter: liveFilter,
-                                    display: adjustments.fisheye > 0 ? "none" : "block",
-                                }}
-                                draggable={false}
-                            />
+                            {/* Processed canvas — pixel-level color grading */}
+                            {/* Regular filtered image — shown when no pixel processing needed */}
+                            {!adjustments.sepiaRemap && (
+                                <img
+                                    src={image}
+                                    alt="edited"
+                                    className="absolute inset-0 h-full object-cover object-left"
+                                    style={{
+                                        width: `${canvasWidth}px`,
+                                        maxWidth: "none",
+                                        filter: liveFilter,
+                                        display: adjustments.fisheye > 0 ? "none" : "block",
+                                    }}
+                                    draggable={false}
+                                />
+                            )}
+
+                            {/* Processed canvas — shown only when pixel processing needed */}
+                            {adjustments.sepiaRemap && (
+                                <canvas
+                                    ref={processedCanvasRef}
+                                    className="absolute inset-0 pointer-events-none"
+                                    style={{
+                                        width: `${canvasWidth}px`,
+                                        height: "100%",
+                                        maxWidth: "none",
+                                        objectFit: "cover",
+                                        objectPosition: "left",
+                                        display: adjustments.fisheye > 0 ? "none" : "block",
+                                    }}
+                                />
+                            )}
 
                             {/* Fisheye canvas — only shows when fisheye > 0 */}
                             <canvas

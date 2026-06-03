@@ -25,9 +25,90 @@ export type Preset = {
     dateStampColor: string
     shadowTintColor: string
     highlightTintColor: string
+    sepiaRemap: boolean
   }
   filter: string
 }
+export function applyCanvasFilter(
+  src: HTMLImageElement,
+  adj: Preset["adjustments"]
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas")
+  canvas.width = src.naturalWidth
+  canvas.height = src.naturalHeight
+  const ctx = canvas.getContext("2d")!
+  ctx.drawImage(src, 0, 0)
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const d = imageData.data
+
+  for (let i = 0; i < d.length; i += 4) {
+    let r = d[i] / 255
+    let g = d[i + 1] / 255
+    let b = d[i + 2] / 255
+
+    // Step 1 — exposure
+    const exp = Math.pow(2, adj.exposure / 100)
+    r *= exp; g *= exp; b *= exp
+
+    // Step 2 — convert to luminance (desaturate based on saturation value)
+    const luma = 0.299 * r + 0.587 * g + 0.114 * b
+    const sat = Math.max(0, 1 + adj.saturation / 100)
+    r = luma + (r - luma) * sat
+    g = luma + (g - luma) * sat
+    b = luma + (b - luma) * sat
+
+    // Step 3 — contrast
+    const con = 1 + adj.contrast / 100
+    r = (r - 0.5) * con + 0.5
+    g = (g - 0.5) * con + 0.5
+    b = (b - 0.5) * con + 0.5
+
+    // Step 4 — shadows/highlights
+    const lum2 = 0.299 * r + 0.587 * g + 0.114 * b
+    const sMask = Math.max(0, 1 - lum2 * 2)        // strong in darks
+    const hMask = Math.max(0, lum2 * 2 - 1)        // strong in lights
+    r += (adj.shadows / 100) * sMask * 0.4
+    g += (adj.shadows / 100) * sMask * 0.4
+    b += (adj.shadows / 100) * sMask * 0.4
+    r += (adj.highlight / 100) * hMask * 0.4
+    g += (adj.highlight / 100) * hMask * 0.4
+    b += (adj.highlight / 100) * hMask * 0.4
+
+    // Step 5 — temperature (red/blue shift)
+    r += adj.temperature / 100 * 0.15
+    b -= adj.temperature / 100 * 0.15
+
+    // Instead of overlaying sepia, we remap ALL pixels to warm brown tones
+    // Even blacks become warm dark brown
+    // Step 6 — SEPIA REMAP — only for presets that want it
+    if (adj.sepiaRemap) {
+      const sepiaMix = 0.95
+      const newLuma = 0.299 * r + 0.587 * g + 0.114 * b
+      const sr = newLuma * 1.1 + 0.08
+      const sg = newLuma * 0.85
+      const sb = newLuma * 0.55 + 0.02
+      r = r * (1 - sepiaMix) + sr * sepiaMix
+      g = g * (1 - sepiaMix) + sg * sepiaMix
+      b = b * (1 - sepiaMix) + sb * sepiaMix
+    }
+
+    // Step 7 — fade (lift blacks)
+    const fade = (adj.fade ?? 0) / 100 * 0.35
+    r = r * (1 - fade) + fade
+    g = g * (1 - fade) + fade
+    b = b * (1 - fade) + fade
+
+    // Clamp and write back
+    d[i] = Math.min(255, Math.max(0, r * 255))
+    d[i + 1] = Math.min(255, Math.max(0, g * 255))
+    d[i + 2] = Math.min(255, Math.max(0, b * 255))
+  }
+
+  ctx.putImageData(imageData, 0, 0)
+  return canvas
+}
+
 export function buildFilter(adj: Preset["adjustments"] & { vignette?: number }): string {
   const brightness = 1 + adj.exposure / 100
   const contrast = 1 + adj.contrast / 100
@@ -72,6 +153,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "contrast(1.2) saturate(0.7) brightness(0.85) sepia(0.15)",
   },
@@ -91,6 +173,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "contrast(1.1) saturate(1.1) brightness(1.05) sepia(0.1) hue-rotate(5deg)",
   },
@@ -110,6 +193,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "contrast(0.95) saturate(0.9) brightness(1.1) hue-rotate(-5deg)",
   },
@@ -129,6 +213,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "contrast(1.05) saturate(1.05) brightness(1.08) sepia(0.15) hue-rotate(8deg)",
   },
@@ -148,6 +233,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "contrast(1.15) saturate(1.2) brightness(1.0) sepia(0.2) hue-rotate(-10deg)",
   },
@@ -167,6 +253,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "grayscale(1) contrast(1.25) brightness(0.95)",
   },
@@ -186,6 +273,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "saturate(0.75) hue-rotate(30deg) contrast(1.3) brightness(0.95)",
   },
@@ -205,6 +293,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "contrast(1.2) saturate(1.4) brightness(1.05) hue-rotate(5deg)",
   },
@@ -224,6 +313,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "contrast(1.1) saturate(1.0) brightness(1.05) hue-rotate(-3deg)",
   },
@@ -243,6 +333,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "contrast(1.15) saturate(1.15) brightness(1.05)",
   },
@@ -272,6 +363,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "brightness(1.4) contrast(0.8) saturate(0.7) sepia(0.2)",
   },
@@ -301,6 +393,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "brightness(1.15) contrast(0.85) saturate(0.8) sepia(0.25) hue-rotate(5deg)",
   },
@@ -330,6 +423,7 @@ export const FILM_PRESETS: Preset[] = [
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: false,
     },
     filter: "brightness(0.90) contrast(0.70) saturate(0.25) sepia(0.2) hue-rotate(-25deg)",
   },
@@ -343,9 +437,9 @@ export const FILM_PRESETS: Preset[] = [
       exposure: 8,
       contrast: 30,
       highlight: 20,
-      shadows: -25,
+      shadows: 50,
       saturation: -90,
-      grain: 45,
+      grain: 70,
       sharpness: 0,
       blur: 5,
       fisheye: 0,
@@ -354,11 +448,12 @@ export const FILM_PRESETS: Preset[] = [
       lightLeakOpacity: 35,
       lightLeakColor: "#cc8833",
       lightLeakPosition: "center-right",
-      dust: 15,
+      dust: 60,
       dateStamp: false,
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
+      sepiaRemap: true,
     },
     filter: "brightness(1.05) contrast(1.3) saturate(0.1) sepia(1) hue-rotate(8deg)",
   },

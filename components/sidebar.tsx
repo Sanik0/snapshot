@@ -84,92 +84,16 @@ export function SidebarSection({ title, defaultOpen = false, children }: {
     )
 }
 
-// Interactive tone curve
-function ToneCurve() {
-    const svgRef = useRef<SVGSVGElement>(null)
-    const [points, setPoints] = useState([
-        { x: 0, y: 100 },
-        { x: 25, y: 75 },
-        { x: 50, y: 50 },
-        { x: 75, y: 25 },
-        { x: 100, y: 0 },
-    ])
-    const draggingIndex = useRef<number | null>(null)
-
-    const toSvgCoords = (e: React.MouseEvent) => {
-        const svg = svgRef.current
-        if (!svg) return { x: 0, y: 0 }
-        const rect = svg.getBoundingClientRect()
-        return {
-            x: Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)),
-            y: Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100)),
-        }
-    }
-
-    const onMouseDown = (index: number) => (e: React.MouseEvent) => {
-        e.preventDefault()
-        draggingIndex.current = index
-    }
-
-    const onMouseMove = (e: React.MouseEvent) => {
-        if (draggingIndex.current === null) return
-        const { x, y } = toSvgCoords(e)
-        setPoints(prev => prev.map((p, i) => i === draggingIndex.current ? { x, y } : p))
-    }
-
-    const onMouseUp = () => { draggingIndex.current = null }
-
-    const sorted = [...points].sort((a, b) => a.x - b.x)
-    const pathD = sorted.reduce((acc, p, i) => {
-        if (i === 0) return `M ${p.x} ${p.y}`
-        const prev = sorted[i - 1]
-        const cpx = (prev.x + p.x) / 2
-        return `${acc} C ${cpx} ${prev.y} ${cpx} ${p.y} ${p.x} ${p.y}`
-    }, "")
-
-    return (
-        <div className="px-4 pb-4">
-            <p className="text-[10px] font-semibold tracking-widest text-white/30 uppercase mb-2">Tone Curve</p>
-            <svg
-                ref={svgRef}
-                viewBox="0 0 100 100"
-                className="w-full aspect-square rounded bg-[#1a1a1a] border border-white/10 cursor-crosshair"
-                onMouseMove={onMouseMove}
-                onMouseUp={onMouseUp}
-                onMouseLeave={onMouseUp}
-                preserveAspectRatio="none"
-            >
-                {/* Grid */}
-                {[25, 50, 75].map(p => (
-                    <g key={p}>
-                        <line x1={p} y1={0} x2={p} y2={100} stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />
-                        <line x1={0} y1={p} x2={100} y2={p} stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" />
-                    </g>
-                ))}
-                {/* Baseline */}
-                <line x1="0" y1="100" x2="100" y2="0" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" strokeDasharray="2 2" />
-                {/* Curve */}
-                <path d={pathD} fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" />
-                {/* Control points */}
-                {points.map((p, i) => (
-                    <circle
-                        key={i} cx={p.x} cy={p.y} r="3"
-                        fill="white" stroke="rgba(0,0,0,0.5)" strokeWidth="0.5"
-                        className="cursor-grab active:cursor-grabbing"
-                        onMouseDown={onMouseDown(i)}
-                    />
-                ))}
-            </svg>
-            <p className="text-[9px] text-white/20 mt-1 text-center">Drag points to adjust curve</p>
-        </div>
-    )
-}
-
 export function Sidebar({
-    adjustments, onChange,
+    adjustments,
+    onChange,
+    selectedFrame,
+    onFrameChange,
 }: {
     adjustments: Adjustments
     onChange: (key: keyof Adjustments, val: number | string | boolean) => void
+    selectedFrame: string | null
+    onFrameChange: (frame: string | null) => void
 }) {
     return (
         <>
@@ -189,7 +113,6 @@ export function Sidebar({
                     <SliderRow label="Hue" value={adjustments.hue} trackClass="bg-gradient-to-r from-red-400 via-green-400 to-blue-400" onChange={v => onChange("hue", v)} />
                     <SliderRow label="Fade" value={adjustments.fade} min={0} max={100} trackClass="bg-gradient-to-r from-white/10 to-white/50" onChange={v => onChange("fade", v)} />
                 </SidebarGroup>
-                <ToneCurve />
             </SidebarSection>
 
             <SidebarSection title="Detail">
@@ -338,6 +261,47 @@ export function Sidebar({
                             ))}
                         </div>
                     )}
+                </div>
+            </SidebarSection>
+
+            <SidebarSection title="Frames">
+                <div className="px-4 pb-4">
+                    <div className="grid grid-cols-3 gap-2">
+                        {/* No frame option */}
+                        <button
+                            onClick={() => onFrameChange(null)}
+                            className={`aspect-[3/4] rounded border flex items-center justify-center transition-all ${selectedFrame === null
+                                    ? "border-white/40 bg-white/10"
+                                    : "border-white/10 hover:border-white/20"
+                                }`}
+                        >
+                            <span className="text-[9px] text-white/40 font-medium tracking-wider uppercase">None</span>
+                        </button>
+
+                        {/* Frame options */}
+                        {[
+                            { id: "/frames/frame1.png", name: "Polaroid" },
+                            { id: "/frames/frame4.png", name: "Instax" },
+                            { id: "/frames/frame3.png", name: "Vintage" },
+                            { id: "/frames/frame5.png", name: "Kodak" },
+                        ].map(({ id, name }) => (
+                            <button
+                                key={id}
+                                onClick={() => onFrameChange(id)}
+                                className={`aspect-[3/4] rounded border overflow-hidden transition-all ${selectedFrame === id
+                                        ? "border-white/40"
+                                        : "border-white/10 hover:border-white/20"
+                                    }`}
+                            >
+                                <img
+                                    src={id}
+                                    alt={name}
+                                    className="w-full h-full object-cover"
+                                />
+                            </button>
+                        ))}
+                    </div>
+                    <p className="text-[9px] text-white/20 mt-3 text-center">Drop frame PNGs into public/frames/</p>
                 </div>
             </SidebarSection>
         </>

@@ -9,9 +9,12 @@ interface ImageCanvasProps {
     liveFilter: string
     adjustments: Preset["adjustments"] & { vignette: number }
     onPresetChange: (preset: Preset) => void
+    selectedFrame: string | null
+    onFrameChange: (frame: string | null) => void
 }
 
-export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetChange }: ImageCanvasProps) {
+// ✅ Fixed — includes frame props
+export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetChange, selectedFrame, onFrameChange }: ImageCanvasProps) {
     const [image, setImage] = useState<string | null>(null)
     const [fileName, setFileName] = useState<string>("")
     const [zoom, setZoom] = useState(25)
@@ -75,10 +78,11 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         const ctx = canvas.getContext("2d")
         if (!ctx) return
 
-        const img = new Image()
-        img.onload = () => {
-            const w = img.naturalWidth
-            const h = img.naturalHeight
+        const applyFisheye = (source: HTMLCanvasElement | HTMLImageElement) => {
+            const w = source instanceof HTMLImageElement ? source.naturalWidth : source.width
+            const h = source instanceof HTMLImageElement ? source.naturalHeight : source.height
+            if (w === 0 || h === 0) return
+
             canvas.width = w
             canvas.height = h
 
@@ -86,7 +90,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             off.width = w
             off.height = h
             const offCtx = off.getContext("2d")!
-            offCtx.drawImage(img, 0, 0)
+            offCtx.drawImage(source, 0, 0)
             const src = offCtx.getImageData(0, 0, w, h)
             const dst = ctx.createImageData(w, h)
 
@@ -102,7 +106,6 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                     const r = Math.sqrt(nx * nx + ny * ny)
                     const dstIdx = (y * w + x) * 4
 
-                    // Outside the circle — pure black
                     if (r > 1) {
                         dst.data[dstIdx] = 0
                         dst.data[dstIdx + 1] = 0
@@ -111,10 +114,8 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                         continue
                     }
 
-                    // Barrel distortion
                     const distorted = r === 0 ? 0 : (Math.tan(r * strength) / (Math.tan(strength) || 1))
                     const angle = Math.atan2(ny, nx)
-
                     const srcX = Math.round(cx + distorted * Math.cos(angle) * radius)
                     const srcY = Math.round(cy + distorted * Math.sin(angle) * radius)
 
@@ -125,7 +126,6 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                         dst.data[dstIdx + 2] = src.data[srcIdx + 2]
                         dst.data[dstIdx + 3] = src.data[srcIdx + 3]
                     } else {
-                        // Out of bounds — black
                         dst.data[dstIdx] = 0
                         dst.data[dstIdx + 1] = 0
                         dst.data[dstIdx + 2] = 0
@@ -133,34 +133,40 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                     }
                 }
             }
+
             ctx.putImageData(dst, 0, 0)
-
-            // Fill entire canvas black first
-            ctx.globalCompositeOperation = "destination-over"
-            ctx.fillStyle = "black"
-            ctx.fillRect(0, 0, w, h)
-            ctx.globalCompositeOperation = "source-over"
-
-            // Soft feathered circle mask — fades into black at edges
             ctx.globalCompositeOperation = "destination-in"
             const gradient = ctx.createRadialGradient(cx, cy, radius * 0.75, cx, cy, radius * 0.98)
-            gradient.addColorStop(0, "rgba(0,0,0,1)")   // fully visible in center
-            gradient.addColorStop(0.7, "rgba(0,0,0,1)") // still fully visible
-            gradient.addColorStop(1, "rgba(0,0,0,0)")   // fades out at edge
+            gradient.addColorStop(0, "rgba(0,0,0,1)")
+            gradient.addColorStop(0.7, "rgba(0,0,0,1)")
+            gradient.addColorStop(1, "rgba(0,0,0,0)")
             ctx.fillStyle = gradient
             ctx.beginPath()
             ctx.arc(cx, cy, radius * 0.98, 0, Math.PI * 2)
             ctx.fill()
             ctx.globalCompositeOperation = "source-over"
-
-            // Final black background so outside circle is pure black not transparent
             ctx.globalCompositeOperation = "destination-over"
             ctx.fillStyle = "#000000"
             ctx.fillRect(0, 0, w, h)
             ctx.globalCompositeOperation = "source-over"
         }
-        img.src = image
-    }, [image, adjustments.fisheye])
+
+        if (adjustments.sepiaRemap) {
+            // Poll until processedCanvas has valid dimensions
+            const waitForCanvas = () => {
+                const pc = processedCanvasRef.current
+                if (pc && pc.width > 0 && pc.height > 0) {
+                    applyFisheye(pc)
+                } else {
+                    setTimeout(waitForCanvas, 50)
+                }
+            }
+            waitForCanvas()
+        } else {
+            const img = imageElementRef.current
+            if (img) applyFisheye(img)
+        }
+    }, [image, adjustments.fisheye, adjustments.sepiaRemap, adjustments])
 
     useEffect(() => {
         const canvas = dustCanvasRef.current
@@ -372,187 +378,215 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                 ) : (
                     <div
                         ref={canvasRef}
-                        className="relative select-none overflow-hidden"
+                        className="relative select-none"
                         style={{
                             width: `${Math.min(zoom, 100)}%`,
                             maxHeight: "100%",
-                            aspectRatio: imageDimensions.w && imageDimensions.h
-                                ? `${imageDimensions.w}/${imageDimensions.h}`
-                                : "4/3",
+                            aspectRatio: selectedFrame
+                                ? "3/4"
+                                : imageDimensions.w && imageDimensions.h
+                                    ? `${imageDimensions.w}/${imageDimensions.h}`
+                                    : "4/3",
                             cursor: isDraggingSplit ? "col-resize" : "default",
+                            backgroundColor: selectedFrame ? "white" : "transparent", // 👈 add this
                         }}
                     >
-                        {/* Original */}
-                        <img
-                            src={image}
-                            alt="original"
-                            className="absolute inset-0 w-full h-full object-cover"
-                            draggable={false}
-                        />
-
-                        {/* Edited side */}
                         <div
-                            className="absolute inset-0 overflow-hidden pointer-events-none"
-                            style={{ width: `${splitPos}%` }}
+                            className="absolute overflow-hidden"
+                            style={selectedFrame ? {
+                                top: "5%",
+                                left: "5%",
+                                right: "5%",
+                                bottom: "18%",
+                            } : {
+                                top: 0, left: 0, right: 0, bottom: 0
+                            }}
                         >
-                            {/* Processed canvas — pixel-level color grading */}
-                            {/* Regular filtered image — shown when no pixel processing needed */}
-                            {!adjustments.sepiaRemap && (
-                                <img
-                                    src={image}
-                                    alt="edited"
-                                    className="absolute inset-0 h-full object-cover object-left"
+                            {/* Original */}
+                            <img
+                                src={image}
+                                alt="original"
+                                className="absolute inset-0 w-full h-full object-cover"
+                                draggable={false}
+                            />
+
+                            {/* Edited side */}
+                            <div
+                                className="absolute inset-0 overflow-hidden pointer-events-none"
+                                style={{ width: `${splitPos}%` }}
+                            >
+                                {/* Processed canvas — pixel-level color grading */}
+                                {/* Regular filtered image — shown when no pixel processing needed */}
+                                {!adjustments.sepiaRemap && (
+                                    <img
+                                        src={image}
+                                        alt="edited"
+                                        className="absolute inset-0 h-full object-cover object-left"
+                                        style={{
+                                            width: `${canvasWidth}px`,
+                                            maxWidth: "none",
+                                            filter: liveFilter,
+                                            display: adjustments.fisheye > 0 ? "none" : "block",
+                                        }}
+                                        draggable={false}
+                                    />
+                                )}
+
+                                {/* Processed canvas — shown only when pixel processing needed */}
+                                {adjustments.sepiaRemap && (
+                                    <canvas
+                                        ref={processedCanvasRef}
+                                        className="absolute inset-0 pointer-events-none"
+                                        style={{
+                                            width: `${canvasWidth}px`,
+                                            height: "100%",
+                                            maxWidth: "none",
+                                            objectFit: "cover",
+                                            objectPosition: "left",
+                                            display: adjustments.fisheye > 0 ? "none" : "block",
+                                        }}
+                                    />
+                                )}
+
+                                {/* Fisheye canvas — only shows when fisheye > 0 */}
+                                <canvas
+                                    ref={fisheyeCanvasRef}
+                                    className="absolute inset-0 h-full object-cover object-left pointer-events-none"
                                     style={{
                                         width: `${canvasWidth}px`,
                                         maxWidth: "none",
                                         filter: liveFilter,
-                                        display: adjustments.fisheye > 0 ? "none" : "block",
-                                    }}
-                                    draggable={false}
-                                />
-                            )}
-
-                            {/* Processed canvas — shown only when pixel processing needed */}
-                            {adjustments.sepiaRemap && (
-                                <canvas
-                                    ref={processedCanvasRef}
-                                    className="absolute inset-0 pointer-events-none"
-                                    style={{
-                                        width: `${canvasWidth}px`,
-                                        height: "100%",
-                                        maxWidth: "none",
-                                        objectFit: "cover",
-                                        objectPosition: "left",
-                                        display: adjustments.fisheye > 0 ? "none" : "block",
+                                        display: adjustments.fisheye > 0 ? "block" : "none",
                                     }}
                                 />
-                            )}
 
-                            {/* Fisheye canvas — only shows when fisheye > 0 */}
-                            <canvas
-                                ref={fisheyeCanvasRef}
-                                className="absolute inset-0 h-full object-cover object-left pointer-events-none"
-                                style={{
-                                    width: `${canvasWidth}px`,
-                                    maxWidth: "none",
-                                    filter: liveFilter,
-                                    display: adjustments.fisheye > 0 ? "block" : "none",
-                                }}
-                            />
-
-                            {/* Grain — always mounted */}
-                            <canvas
-                                ref={grainCanvasRef}
-                                className="absolute inset-0 pointer-events-none"
-                                style={{
-                                    width: `${canvasWidth}px`,
-                                    maxWidth: "none",
-                                    height: "100%",
-                                    opacity: adjustments.grain > 0 ? (adjustments.grain / 100) * 0.9 : 0,
-                                    mixBlendMode: "soft-light",
-                                    imageRendering: "pixelated",
-                                    transition: "opacity 0.2s",
-                                }}
-                            />
-
-                            {/* Dust and scratches */}
-                            <canvas
-                                ref={dustCanvasRef}
-                                className="absolute inset-0 pointer-events-none"
-                                style={{
-                                    width: `${canvasWidth}px`,
-                                    maxWidth: "none",
-                                    height: "100%",
-                                    opacity: adjustments.dust > 0 ? (adjustments.dust / 100) * 0.8 : 0,
-                                    mixBlendMode: "screen",
-                                    imageRendering: "pixelated",
-                                    transition: "opacity 0.2s",
-                                }}
-                            />
-
-                            {/* Date stamp */}
-                            {adjustments.dateStamp && (
+                                {/* Grain — always mounted */}
                                 <canvas
-                                    ref={dateStampRef}
+                                    ref={grainCanvasRef}
                                     className="absolute inset-0 pointer-events-none"
                                     style={{
                                         width: `${canvasWidth}px`,
                                         maxWidth: "none",
                                         height: "100%",
+                                        opacity: adjustments.grain > 0 ? (adjustments.grain / 100) * 0.9 : 0,
+                                        mixBlendMode: "soft-light",
+                                        imageRendering: "pixelated",
+                                        transition: "opacity 0.2s",
                                     }}
                                 />
-                            )}
 
-                            {/* Fisheye circle vignette */}
-                            {adjustments.fisheye > 0 && (
-                                <div
-                                    className="absolute inset-0 pointer-events-none z-10"
+                                {/* Dust and scratches */}
+                                <canvas
+                                    ref={dustCanvasRef}
+                                    className="absolute inset-0 pointer-events-none"
                                     style={{
                                         width: `${canvasWidth}px`,
                                         maxWidth: "none",
-                                        background: `radial-gradient(ellipse at center, transparent ${55 - adjustments.fisheye * 0.3}%, rgba(0,0,0,0.6) ${75 - adjustments.fisheye * 0.2}%, rgba(0,0,0,0.95) 100%)`,
+                                        height: "100%",
+                                        opacity: adjustments.dust > 0 ? (adjustments.dust / 100) * 0.8 : 0,
+                                        mixBlendMode: "screen",
+                                        imageRendering: "pixelated",
+                                        transition: "opacity 0.2s",
                                     }}
                                 />
-                            )}
 
-                            {/* Light Leak */}
-                            {adjustments.lightLeakOpacity > 0 && (() => {
-                                const pos = adjustments.lightLeakPosition
-                                const gradientMap: Record<string, string> = {
-                                    "top-right": `radial-gradient(ellipse at 100% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                    "top-left": `radial-gradient(ellipse at 0% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                    "bottom-right": `radial-gradient(ellipse at 100% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                    "bottom-left": `radial-gradient(ellipse at 0% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                    "center-left": `radial-gradient(ellipse at 0% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
-                                    "center-right": `radial-gradient(ellipse at 100% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
-                                    "horizontal": `linear-gradient(to bottom, transparent 20%, ${adjustments.lightLeakColor}99 45%, ${adjustments.lightLeakColor} 50%, ${adjustments.lightLeakColor}99 55%, transparent 80%)`,
-                                }
-                                return (
-                                    <div
-                                        className="absolute inset-0 pointer-events-none z-20"
+                                {/* Date stamp */}
+                                {adjustments.dateStamp && (
+                                    <canvas
+                                        ref={dateStampRef}
+                                        className="absolute inset-0 pointer-events-none"
                                         style={{
                                             width: `${canvasWidth}px`,
                                             maxWidth: "none",
-                                            background: gradientMap[pos] ?? gradientMap["top-right"],
-                                            opacity: adjustments.lightLeakOpacity / 100,
-                                            mixBlendMode: "screen",
+                                            height: "100%",
                                         }}
                                     />
-                                )
-                            })()}
+                                )}
 
-                            {/* Vignette — always mounted */}
-                            <div
-                                className="absolute inset-0 pointer-events-none"
-                                style={{
-                                    width: `${canvasWidth}px`,
-                                    maxWidth: "none",
-                                    background: `radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,${(adjustments.vignette / 100) * 1.8}) 75%, rgba(0,0,0,${(adjustments.vignette / 100) * 2.2}) 100%)`,
-                                    transition: "opacity 0.2s",
-                                }}
-                            />
-                        </div>
+                                {/* Fisheye circle vignette */}
+                                {adjustments.fisheye > 0 && (
+                                    <div
+                                        className="absolute inset-0 pointer-events-none z-10"
+                                        style={{
+                                            width: `${canvasWidth}px`,
+                                            maxWidth: "none",
+                                            background: `radial-gradient(ellipse at center, transparent ${55 - adjustments.fisheye * 0.3}%, rgba(0,0,0,0.6) ${75 - adjustments.fisheye * 0.2}%, rgba(0,0,0,0.95) 100%)`,
+                                        }}
+                                    />
+                                )}
 
-                        {/* Split line */}
-                        <div
-                            className="absolute top-0 bottom-0 w-px bg-white/80 z-10"
-                            style={{ left: `${splitPos}%` }}
-                        >
-                            <div
-                                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center cursor-col-resize shadow-lg z-20"
-                                onMouseDown={(e) => { e.preventDefault(); setIsDraggingSplit(true) }}
-                            >
-                                <span className="material-icons text-white" style={{ fontSize: "0.9rem" }}>unfold_more</span>
+                                {/* Light Leak */}
+                                {adjustments.lightLeakOpacity > 0 && (() => {
+                                    const pos = adjustments.lightLeakPosition
+                                    const gradientMap: Record<string, string> = {
+                                        "top-right": `radial-gradient(ellipse at 100% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                        "top-left": `radial-gradient(ellipse at 0% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                        "bottom-right": `radial-gradient(ellipse at 100% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                        "bottom-left": `radial-gradient(ellipse at 0% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                        "center-left": `radial-gradient(ellipse at 0% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
+                                        "center-right": `radial-gradient(ellipse at 100% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
+                                        "horizontal": `linear-gradient(to bottom, transparent 20%, ${adjustments.lightLeakColor}99 45%, ${adjustments.lightLeakColor} 50%, ${adjustments.lightLeakColor}99 55%, transparent 80%)`,
+                                    }
+                                    return (
+                                        <div
+                                            className="absolute inset-0 pointer-events-none z-20"
+                                            style={{
+                                                width: `${canvasWidth}px`,
+                                                maxWidth: "none",
+                                                background: gradientMap[pos] ?? gradientMap["top-right"],
+                                                opacity: adjustments.lightLeakOpacity / 100,
+                                                mixBlendMode: "screen",
+                                            }}
+                                        />
+                                    )
+                                })()}
+
+                                {/* Vignette — always mounted */}
+                                <div
+                                    className="absolute inset-0 pointer-events-none"
+                                    style={{
+                                        width: `${canvasWidth}px`,
+                                        maxWidth: "none",
+                                        background: `radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,${(adjustments.vignette / 100) * 1.8}) 75%, rgba(0,0,0,${(adjustments.vignette / 100) * 2.2}) 100%)`,
+                                        transition: "opacity 0.2s",
+                                    }}
+                                />
                             </div>
+
+                            {/* Split line */}
+                            <div
+                                className="absolute top-0 bottom-0 w-px bg-white/80 z-10"
+                                style={{ left: `${splitPos}%` }}
+                            >
+                                <div
+                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center cursor-col-resize shadow-lg z-20"
+                                    onMouseDown={(e) => { e.preventDefault(); setIsDraggingSplit(true) }}
+                                >
+                                    <span className="material-icons text-white" style={{ fontSize: "0.9rem" }}>unfold_more</span>
+                                </div>
+                            </div>
+
+                            {/* Labels 
+                            <div className="absolute top-3 left-3 px-2 py-1 rounded bg-black/50 text-[10px] text-white/60 font-medium tracking-wider uppercase backdrop-blur-sm">
+                                Edited
+                            </div>
+                            <div className="absolute top-3 right-3 px-2 py-1 rounded bg-black/50 text-[10px] text-white/60 font-medium tracking-wider uppercase backdrop-blur-sm">
+                                Original
+                            </div>
+
+                            */}
+
                         </div>
 
-                        {/* Labels */}
-                        <div className="absolute top-3 left-3 px-2 py-1 rounded bg-black/50 text-[10px] text-white/60 font-medium tracking-wider uppercase backdrop-blur-sm">
-                            Edited
-                        </div>
-                        <div className="absolute top-3 right-3 px-2 py-1 rounded bg-black/50 text-[10px] text-white/60 font-medium tracking-wider uppercase backdrop-blur-sm">
-                            Original
-                        </div>
+                        {selectedFrame && (
+                            <img
+                                src={selectedFrame}
+                                alt="frame"
+                                className="absolute inset-0 w-full h-full pointer-events-none z-30"
+                                style={{ objectFit: "fill" }}
+                                draggable={false}
+                            />
+                        )}
                     </div>
                 )}
             </div>

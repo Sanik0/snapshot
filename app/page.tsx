@@ -16,10 +16,10 @@ export default function Home() {
     ...FILM_PRESETS[0].adjustments,
     vignette: 0,
   })
+  const [selectedFrame, setSelectedFrame] = useState<string | null>(null)
 
   // Recompute CSS filter whenever any slider moves
   const liveFilter = useMemo(() => buildFilter(adjustments), [adjustments])
-
   const handlePresetChange = (preset: Preset) => {
     setActivePreset(preset)
     setAdjustments({
@@ -57,6 +57,8 @@ export default function Home() {
               liveFilter={liveFilter}
               adjustments={adjustments}
               onPresetChange={handlePresetChange}
+              selectedFrame={selectedFrame}
+              onFrameChange={setSelectedFrame}
             />
           </div>
 
@@ -76,7 +78,12 @@ export default function Home() {
                   <span className="material-icons" style={{ fontSize: "1.1rem" }}>close</span>
                 </button>
               </div>
-              <Sidebar adjustments={adjustments} onChange={handleAdjustmentChange} />
+              <Sidebar
+                adjustments={adjustments}
+                onChange={handleAdjustmentChange}
+                selectedFrame={selectedFrame}
+                onFrameChange={setSelectedFrame}
+              />
             </div>
           </>
         </div>

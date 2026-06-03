@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef } from "react"
 import { ImageCanvas } from "@/components/image-canvas"
 import { Sidebar } from "@/components/sidebar"
 import { FILM_PRESETS, buildFilter, type Preset } from "@/lib/presets"
@@ -17,9 +17,10 @@ export default function Home() {
     vignette: 0,
   })
   const [selectedFrame, setSelectedFrame] = useState<string | null>(null)
+  const exportFnRef = useRef<(() => void) | null>(null)
 
-  // Recompute CSS filter whenever any slider moves
   const liveFilter = useMemo(() => buildFilter(adjustments), [adjustments])
+
   const handlePresetChange = (preset: Preset) => {
     setActivePreset(preset)
     setAdjustments({
@@ -31,6 +32,7 @@ export default function Home() {
   const handleAdjustmentChange = (key: keyof Adjustments, val: number | string | boolean) => {
     setAdjustments(prev => ({ ...prev, [key]: val }))
   }
+
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <main className="w-full overflow-hidden">
@@ -45,7 +47,7 @@ export default function Home() {
                 <span className="material-icons" style={{ fontSize: "1.1rem" }}>tune</span>
               </button>
               <button type="button" className="text-white/90 bg-black hover:bg-white/20 box-border border-white/30 border-[0.5px] focus:ring-4 focus:ring-blue-300 shadow-xs font-medium cursor-pointer leading-5 rounded-md text-sm px-3 py-2 focus:outline-none">Share</button>
-              <button type="button" className="text-black bg-blue-600 hover:bg-blue-700 box-border border border-transparent focus:ring-4 focus:ring-blue-300 shadow-xs font-medium cursor-pointer leading-5 rounded-md text-sm px-3 py-2 focus:outline-none">Save / Export</button>
+              <button onClick={() => exportFnRef.current?.()} type="button" className="text-black bg-blue-600 hover:bg-blue-700 box-border border border-transparent focus:ring-4 focus:ring-blue-300 shadow-xs font-medium cursor-pointer leading-5 rounded-md text-sm px-3 py-2 focus:outline-none">Save / Export</button>
             </div>
           </div>
         </nav>
@@ -59,6 +61,7 @@ export default function Home() {
               onPresetChange={handlePresetChange}
               selectedFrame={selectedFrame}
               onFrameChange={setSelectedFrame}
+              onExport={(fn) => { exportFnRef.current = fn }}
             />
           </div>
 

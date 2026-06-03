@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react"
 import { FILM_PRESETS, type Preset } from "@/lib/presets"
 import { applyCanvasFilter } from "@/lib/presets"
+import { toPng, toJpeg } from 'html-to-image'
 
 interface ImageCanvasProps {
     activePreset: Preset
@@ -11,10 +12,11 @@ interface ImageCanvasProps {
     onPresetChange: (preset: Preset) => void
     selectedFrame: string | null
     onFrameChange: (frame: string | null) => void
+    onExport: (fn: () => void) => void
 }
 
 // ✅ Fixed — includes frame props
-export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetChange, selectedFrame, onFrameChange }: ImageCanvasProps) {
+export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetChange, selectedFrame, onFrameChange, onExport }: ImageCanvasProps) {
     const [image, setImage] = useState<string | null>(null)
     const [fileName, setFileName] = useState<string>("")
     const [zoom, setZoom] = useState(25)
@@ -36,6 +38,27 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
     const dustCanvasRef = useRef<HTMLCanvasElement>(null)
     const sharpCanvasRef = useRef<HTMLCanvasElement>(null)
     const imageElementRef = useRef<HTMLImageElement | null>(null)
+
+    const handleExport = async () => {
+        const container = canvasRef.current
+        if (!container) return
+
+        try {
+            const dataUrl = await toJpeg(container, {
+                quality: 0.95,
+                pixelRatio: 2, // 2x for high res
+            })
+            const link = document.createElement("a")
+            link.download = "snapshot.jpg"
+            link.href = dataUrl
+            link.click()
+        } catch (err) {
+            console.error("Export failed", err)
+        }
+    }
+    useEffect(() => {
+        onExport(handleExport)
+    }, [])
 
     useEffect(() => {
         const isMobile = window.innerWidth < 768

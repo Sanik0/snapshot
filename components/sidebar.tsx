@@ -5,11 +5,6 @@ import type { Preset } from "@/lib/presets"
 
 type Adjustments = Preset["adjustments"] & {
     vignette: number
-    sharpness: number
-    blur: number
-    fisheye: number
-    fade: number
-    hue: number
 }
 
 export function SliderRow({
@@ -22,32 +17,32 @@ export function SliderRow({
     min?: number
     max?: number
 }) {
-    const [val, setVal] = useState(value)
-    useEffect(() => { setVal(value) }, [value])
+    const [val, setVal] = useState(value ?? 0)
+    useEffect(() => { setVal(value ?? 0) }, [value])
 
     return (
         <div>
             <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs text-white/60">{label}</span>
-                <span className="text-xs text-white/50 tabular-nums">{val.toFixed(0)}</span>
+                <span className="text-xs text-white/50 tabular-nums">{(val ?? 0).toFixed(0)}</span>
             </div>
             <div className="relative h-4 flex items-center">
                 <div className={`absolute inset-x-0 h-[2px] rounded-full ${trackClass}`} />
                 <input
-                    type="range" min={min} max={max} value={val}
+                    type="range" min={min} max={max} value={val ?? 0}
                     onChange={(e) => {
                         const n = Number(e.target.value)
                         setVal(n)
                         onChange?.(n)
                     }}
                     className="relative w-full appearance-none bg-transparent cursor-pointer
-            [&::-webkit-slider-thumb]:appearance-none
-            [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
-            [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
-            [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-0
-            [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5
-            [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white
-            [&::-moz-range-thumb]:border-0"
+                        [&::-webkit-slider-thumb]:appearance-none
+                        [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
+                        [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
+                        [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-0
+                        [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5
+                        [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white
+                        [&::-moz-range-thumb]:border-0"
                 />
             </div>
         </div>

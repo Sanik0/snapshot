@@ -30,6 +30,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
     const frameCountRef = useRef<number>(0)
     const fisheyeCanvasRef = useRef<HTMLCanvasElement>(null)
     const dustCanvasRef = useRef<HTMLCanvasElement>(null)
+    const sharpCanvasRef = useRef<HTMLCanvasElement>(null)
 
     useEffect(() => {
         const isMobile = window.innerWidth < 768

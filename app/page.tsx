@@ -7,18 +7,6 @@ import { FILM_PRESETS, buildFilter, type Preset } from "@/lib/presets"
 
 type Adjustments = Preset["adjustments"] & {
   vignette: number
-  sharpness: number
-  blur: number
-  fisheye: number
-  fade: number
-  hue: number
-  lightLeakOpacity: number
-  lightLeakColor: string
-  lightLeakPosition: string
-  dust: number
-  dateStamp: boolean
-  dateStampColor: string
-
 }
 
 export default function Home() {
@@ -27,22 +15,11 @@ export default function Home() {
   const [adjustments, setAdjustments] = useState<Adjustments>({
     ...FILM_PRESETS[0].adjustments,
     vignette: 0,
-    sharpness: 0,
-    blur: 0,
-    fisheye: 0,
-    fade: 0,
-    hue: 0,
-    lightLeakOpacity: 0,
-    lightLeakColor: "#ff6600",
-    lightLeakPosition: "top-right",
-    dust: 0,
-    dateStamp: false,
-    dateStampColor: "#ff8800",
   })
-
 
   // Recompute CSS filter whenever any slider moves
   const liveFilter = useMemo(() => buildFilter(adjustments), [adjustments])
+
   const handlePresetChange = (preset: Preset) => {
     setActivePreset(preset)
     setAdjustments({

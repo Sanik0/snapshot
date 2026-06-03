@@ -370,7 +370,7 @@ export const FILM_PRESETS: Preset[] = [
   {
     id: "polaroid",
     name: "Polaroid",
-    image: "/presets/polaroid.jpg",
+    image: "/cameras/polaroid.png",
     adjustments: {
       temperature: 25,
       tint: 8,
@@ -429,8 +429,8 @@ export const FILM_PRESETS: Preset[] = [
   },
   {
     id: "golden-sepia",
-    name: "Golden Hour",
-    image: "/presets/golden-sepia.jpg",
+    name: "Gldn Hr",
+    image: "/cameras/goldenhour.png",
     adjustments: {
       temperature: 80,
       tint: 10,

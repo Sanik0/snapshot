@@ -72,7 +72,7 @@ export default function Home() {
             <div className={`
               h-full flex flex-col bg-black w-72 shrink-0 bg-neutral-primary border-l border-white/10 overflow-y-auto scrollbar-none
               md:relative md:translate-x-0 md:z-auto
-              fixed right-0 top-0 z-30 transition-transform duration-300 ease-in-out
+              fixed right-0 top-0 z-999 transition-transform duration-300 ease-in-out
               ${sidebarOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}
             `}>
               <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-white/10">

@@ -43,10 +43,23 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         const container = canvasRef.current
         if (!container) return
 
+        const prevSplitPos = splitPos
+
+        // Hide split UI
+        const splitLine = container.querySelector(".absolute.top-0.bottom-0.w-px") as HTMLElement
+        const editedLabel = container.querySelector(".absolute.top-3.left-3") as HTMLElement
+        const originalLabel = container.querySelector(".absolute.top-3.right-3") as HTMLElement
+        if (splitLine) splitLine.style.display = "none"
+        if (editedLabel) editedLabel.style.display = "none"
+        if (originalLabel) originalLabel.style.display = "none"
+
+        setSplitPos(100)
+        await new Promise(r => setTimeout(r, 50))
+
         try {
             const dataUrl = await toJpeg(container, {
                 quality: 0.95,
-                pixelRatio: 2, // 2x for high res
+                pixelRatio: 4, // high res without changing zoom
             })
             const link = document.createElement("a")
             link.download = "snapshot.jpg"
@@ -54,6 +67,12 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             link.click()
         } catch (err) {
             console.error("Export failed", err)
+        } finally {
+            if (splitLine) splitLine.style.display = ""
+            if (editedLabel) editedLabel.style.display = ""
+            if (originalLabel) originalLabel.style.display = ""
+            setSplitPos(prevSplitPos)
+            // No zoom change at all — stays at whatever user set
         }
     }
     useEffect(() => {
@@ -65,6 +84,34 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         if (isMobile) setZoom(100)
     }, [])
 
+    const [maxZoom, setMaxZoom] = useState(200)
+
+    useEffect(() => {
+        if (!canvasRef.current || !imageDimensions.w || !imageDimensions.h) return
+
+        const containerH = canvasRef.current.parentElement?.clientHeight ?? 0
+        const containerW = canvasRef.current.parentElement?.clientWidth ?? 0
+        if (!containerH || !containerW) return
+
+        const imageAspect = imageDimensions.w / imageDimensions.h
+        const frameAspect = selectedFrame ? 3 / 4 : imageAspect
+
+        // Max zoom = largest % where image height fits container height
+        // At zoom%, image width = containerW * zoom/100
+        // Image height = imageWidth / aspect
+        // We want imageHeight <= containerH
+        const maxByHeight = (containerH * frameAspect / containerW) * 100
+        const maxByWidth = 100 // never exceed container width
+
+        setMaxZoom(Math.min(Math.floor(Math.min(maxByHeight, maxByWidth)), 100))
+    }, [imageDimensions, selectedFrame, image])
+
+    useEffect(() => {
+        if (maxZoom > 0 && image) {
+            setZoom(maxZoom)
+        }
+    }, [maxZoom])
+
     useEffect(() => {
         if (!canvasRef.current) return
         const update = () => setCanvasWidth(canvasRef.current?.offsetWidth ?? 0)
@@ -73,7 +120,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         ro.observe(canvasRef.current)
         return () => ro.disconnect()
     }, [image])
-
+    2222222
     useEffect(() => {
         const canvas = grainCanvasRef.current
         if (!canvas) return
@@ -305,10 +352,26 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                 imageElementRef.current = img
                 setImage(src)
             }
-            img.src = src  // 👈 this line was missing
+            img.src = src
         }
         reader.readAsDataURL(file)
     }, [])
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (!canvasRef.current || !imageDimensions.w) return
+            const containerH = canvasRef.current.parentElement?.clientHeight ?? 0
+            const containerW = canvasRef.current.parentElement?.clientWidth ?? 0
+            if (!containerH || !containerW) return
+
+            const imageAspect = imageDimensions.w / imageDimensions.h
+            const frameAspect = selectedFrame ? 3 / 4 : imageAspect
+            const maxByHeight = (containerH * frameAspect / containerW) * 100
+            setMaxZoom(Math.min(Math.floor(Math.min(maxByHeight, 100)), 100))
+        }
+        window.addEventListener("resize", handleResize)
+        return () => window.removeEventListener("resize", handleResize)
+    }, [imageDimensions, selectedFrame])
 
     const onDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault()
@@ -411,7 +474,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     ? `${imageDimensions.w}/${imageDimensions.h}`
                                     : "4/3",
                             cursor: isDraggingSplit ? "col-resize" : "default",
-                            backgroundColor: selectedFrame ? "white" : "transparent", // 👈 add this
+                            backgroundColor: selectedFrame ? "white" : "transparent",
                         }}
                     >
                         <div
@@ -605,7 +668,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                             <img
                                 src={selectedFrame}
                                 alt="frame"
-                                className="absolute inset-0 w-full h-full pointer-events-none z-30"
+                                className="absolute inset-0 w-full h-full pointer-events-none z-40"
                                 style={{ objectFit: "fill" }}
                                 draggable={false}
                             />
@@ -617,19 +680,16 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             {/* Zoom toolbar */}
             <div className="flex items-center justify-between px-4 py-2 border-t border-white/10 bg-neutral-primary">
                 <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setZoom(z => Math.max(25, z - 10))}
+                    <button onClick={() => setZoom(z => Math.min(maxZoom, z + 5))}
                         className="text-white/50 hover:text-white/90 transition-colors"
                     >
                         <span className="material-icons" style={{ fontSize: "1rem" }}>remove</span>
                     </button>
-                    <input
-                        type="range" min={25} max={200} value={zoom}
+                    <input type="range" min={10} max={maxZoom} value={zoom}
                         onChange={(e) => setZoom(Number(e.target.value))}
                         className="w-20 accent-blue-500 cursor-pointer"
                     />
-                    <button
-                        onClick={() => setZoom(z => Math.min(200, z + 10))}
+                    <button onClick={() => setZoom(z => Math.max(10, z - 5))}
                         className="text-white/50 hover:text-white/90 transition-colors"
                     >
                         <span className="material-icons" style={{ fontSize: "1rem" }}>add</span>

@@ -280,10 +280,13 @@ export function Sidebar({
 
                         {/* Frame options */}
                         {[
-                            { id: "/frames/frame1.png", name: "Polaroid" },
+                            { id: "/frames/frame9.png", name: "Polaroid" },
                             { id: "/frames/frame4.png", name: "Instax" },
                             { id: "/frames/frame3.png", name: "Vintage" },
                             { id: "/frames/frame5.png", name: "Kodak" },
+                            { id: "/frames/frame7.png", name: "Kodak1" },
+                            { id: "/frames/frame8.png", name: "Film" },
+                            { id: "/frames/frame10.png", name: "Film" },
                         ].map(({ id, name }) => (
                             <button
                                 key={id}

@@ -26,9 +26,11 @@ export type Preset = {
     shadowTintColor: string
     highlightTintColor: string
     sepiaRemap: boolean
+    crtEffect: boolean
   }
   filter: string
 }
+
 export function applyCanvasFilter(
   src: HTMLImageElement,
   adj: Preset["adjustments"]
@@ -36,10 +38,12 @@ export function applyCanvasFilter(
   const canvas = document.createElement("canvas")
   canvas.width = src.naturalWidth
   canvas.height = src.naturalHeight
+  const w = canvas.width
+  const h = canvas.height
   const ctx = canvas.getContext("2d")!
   ctx.drawImage(src, 0, 0)
 
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const imageData = ctx.getImageData(0, 0, w, h)
   const d = imageData.data
 
   for (let i = 0; i < d.length; i += 4) {
@@ -51,7 +55,7 @@ export function applyCanvasFilter(
     const exp = Math.pow(2, adj.exposure / 100)
     r *= exp; g *= exp; b *= exp
 
-    // Step 2 — convert to luminance (desaturate based on saturation value)
+    // Step 2 — saturation
     const luma = 0.299 * r + 0.587 * g + 0.114 * b
     const sat = Math.max(0, 1 + adj.saturation / 100)
     r = luma + (r - luma) * sat
@@ -66,8 +70,8 @@ export function applyCanvasFilter(
 
     // Step 4 — shadows/highlights
     const lum2 = 0.299 * r + 0.587 * g + 0.114 * b
-    const sMask = Math.max(0, 1 - lum2 * 2)        // strong in darks
-    const hMask = Math.max(0, lum2 * 2 - 1)        // strong in lights
+    const sMask = Math.max(0, 1 - lum2 * 2)
+    const hMask = Math.max(0, lum2 * 2 - 1)
     r += (adj.shadows / 100) * sMask * 0.4
     g += (adj.shadows / 100) * sMask * 0.4
     b += (adj.shadows / 100) * sMask * 0.4
@@ -75,40 +79,35 @@ export function applyCanvasFilter(
     g += (adj.highlight / 100) * hMask * 0.4
     b += (adj.highlight / 100) * hMask * 0.4
 
-    // Step 5 — temperature (red/blue shift)
+    // Step 5 — temperature
     r += adj.temperature / 100 * 0.15
     b -= adj.temperature / 100 * 0.15
 
-    // Instead of overlaying sepia, we remap ALL pixels to warm brown tones
-    // Even blacks become warm dark brown
-    // Step 6 — COLOR REMAP
-    if (adj.sepiaRemap) {
+    // Step 6 — color remap
+    if (adj.sepiaRemap && !(adj as any).crtEffect) {
       const newLuma = 0.299 * r + 0.587 * g + 0.114 * b
-
-      // Check temperature to decide warm (sepia) vs cool (cyan/green)
       if (adj.temperature < 0) {
-        // Cyan/green remap — Y2K gel look
-        // Shadows go deep cyan-black, highlights go bright cyan-white
-        const sr = newLuma * 0.55 + 0.02   // red heavily reduced
-        const sg = newLuma * 1.1 + 0.05    // green boosted
-        const sb = newLuma * 1.0 + 0.08    // blue boosted = cyan cast
+        // Cyan/green remap
         const mix = 0.92
+        const sr = newLuma * 0.55 + 0.02
+        const sg = newLuma * 1.1 + 0.05
+        const sb = newLuma * 1.0 + 0.08
         r = r * (1 - mix) + sr * mix
         g = g * (1 - mix) + sg * mix
         b = b * (1 - mix) + sb * mix
       } else {
-        // Warm sepia remap — golden hour
-        const sepiaMix = 0.95
+        // Warm sepia remap
+        const mix = 0.95
         const sr = newLuma * 1.1 + 0.08
         const sg = newLuma * 0.85
         const sb = newLuma * 0.55 + 0.02
-        r = r * (1 - sepiaMix) + sr * sepiaMix
-        g = g * (1 - sepiaMix) + sg * sepiaMix
-        b = b * (1 - sepiaMix) + sb * sepiaMix
+        r = r * (1 - mix) + sr * mix
+        g = g * (1 - mix) + sg * mix
+        b = b * (1 - mix) + sb * mix
       }
     }
 
-    // Step 7 — fade (lift blacks)
+    // Step 7 — fade
     const fade = (adj.fade ?? 0) / 100 * 0.35
     r = r * (1 - fade) + fade
     g = g * (1 - fade) + fade
@@ -118,9 +117,54 @@ export function applyCanvasFilter(
     d[i] = Math.min(255, Math.max(0, r * 255))
     d[i + 1] = Math.min(255, Math.max(0, g * 255))
     d[i + 2] = Math.min(255, Math.max(0, b * 255))
+    d[i + 3] = 255
   }
 
   ctx.putImageData(imageData, 0, 0)
+
+  // Step 8 — CRT effect (after pixel loop, uses canvas drawing API)
+  if ((adj as any).crtEffect) {
+    // Green phosphor pass — read current pixels and remap to green
+    const crtData = ctx.getImageData(0, 0, w, h)
+    const cd = crtData.data
+    for (let i = 0; i < cd.length; i += 4) {
+      const brightness = (cd[i] * 0.299 + cd[i + 1] * 0.587 + cd[i + 2] * 0.114) / 255
+      cd[i] = Math.min(255, brightness * 20)
+      cd[i + 1] = Math.min(255, brightness * 255)
+      cd[i + 2] = Math.min(255, brightness * 60)
+    }
+    ctx.putImageData(crtData, 0, 0)
+
+    // Scanlines
+    for (let y = 0; y < h; y++) {
+      if (y % 3 === 2) {
+        ctx.fillStyle = "rgba(0,0,0,0.5)"
+        ctx.fillRect(0, y, w, 1)
+      }
+    }
+
+    // Vertical pixel separation
+    for (let x = 0; x < w; x++) {
+      if (x % 3 === 2) {
+        ctx.fillStyle = "rgba(0,0,0,0.3)"
+        ctx.fillRect(x, 0, 1, h)
+      }
+    }
+
+    // Green glow bloom
+    const glowCanvas = document.createElement("canvas")
+    glowCanvas.width = w
+    glowCanvas.height = h
+    const glowCtx = glowCanvas.getContext("2d")!
+    glowCtx.filter = "blur(8px)"
+    glowCtx.drawImage(canvas, 0, 0)
+    ctx.globalCompositeOperation = "screen"
+    ctx.globalAlpha = 0.4
+    ctx.drawImage(glowCanvas, 0, 0)
+    ctx.globalAlpha = 1
+    ctx.globalCompositeOperation = "source-over"
+  }
+
   return canvas
 }
 
@@ -169,6 +213,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "contrast(1.2) saturate(0.7) brightness(0.85) sepia(0.15)",
   },
@@ -189,6 +234,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "contrast(1.1) saturate(1.1) brightness(1.05) sepia(0.1) hue-rotate(5deg)",
   },
@@ -209,6 +255,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "contrast(0.95) saturate(0.9) brightness(1.1) hue-rotate(-5deg)",
   },
@@ -229,6 +276,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "contrast(1.05) saturate(1.05) brightness(1.08) sepia(0.15) hue-rotate(8deg)",
   },
@@ -249,6 +297,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "contrast(1.15) saturate(1.2) brightness(1.0) sepia(0.2) hue-rotate(-10deg)",
   },
@@ -269,6 +318,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "grayscale(1) contrast(1.25) brightness(0.95)",
   },
@@ -289,6 +339,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "saturate(0.75) hue-rotate(30deg) contrast(1.3) brightness(0.95)",
   },
@@ -309,6 +360,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "contrast(1.2) saturate(1.4) brightness(1.05) hue-rotate(5deg)",
   },
@@ -329,6 +381,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "contrast(1.1) saturate(1.0) brightness(1.05) hue-rotate(-3deg)",
   },
@@ -349,6 +402,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "contrast(1.15) saturate(1.15) brightness(1.05)",
   },
@@ -379,6 +433,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "brightness(1.4) contrast(0.8) saturate(0.7) sepia(0.2)",
   },
@@ -409,6 +464,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "brightness(1.15) contrast(0.85) saturate(0.8) sepia(0.25) hue-rotate(5deg)",
   },
@@ -439,6 +495,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
+      crtEffect: false,
     },
     filter: "brightness(0.90) contrast(0.70) saturate(0.25) sepia(0.2) hue-rotate(-25deg)",
   },
@@ -469,6 +526,7 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: true,
+      crtEffect: false,
     },
     filter: "brightness(1.05) contrast(1.3) saturate(0.1) sepia(1) hue-rotate(8deg)",
   },
@@ -486,7 +544,7 @@ export const FILM_PRESETS: Preset[] = [
       saturation: -20,
       grain: 45,
       sharpness: 0,
-      blur: 20,
+      blur: 8,
       fisheye: 0,
       fade: 5,
       hue: 0,
@@ -499,6 +557,39 @@ export const FILM_PRESETS: Preset[] = [
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: true,
+      crtEffect: false,
+
+    },
+    filter: "none",
+  },
+  {
+    id: "crt-phosphor",
+    name: "CRT",
+    image: "/presets/crt.jpg",
+    adjustments: {
+      temperature: -20,
+      tint: -30,
+      exposure: -10,
+      contrast: 40,
+      highlight: 20,
+      shadows: -30,
+      saturation: -100,
+      grain: 20,
+      sharpness: 0,
+      blur: 0,
+      fisheye: 0,
+      fade: 0,
+      hue: 0,
+      lightLeakOpacity: 0,
+      lightLeakColor: "#00ff44",
+      lightLeakPosition: "center-right",
+      dust: 0,
+      dateStamp: false,
+      dateStampColor: "#ff8800",
+      shadowTintColor: "#000000",
+      highlightTintColor: "#000000",
+      sepiaRemap: true,
+      crtEffect: true,
     },
     filter: "none",
   },

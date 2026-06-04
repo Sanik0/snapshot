@@ -554,6 +554,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                                 objectFit: "cover",
                                                 objectPosition: "left",
                                                 display: adjustments.fisheye > 0 ? "none" : "block",
+                                                filter: adjustments.blur > 0 ? `blur(${(adjustments.blur / 100) * 8}px)` : "none", // 👈 add this
                                             }}
                                         />
                                     )}

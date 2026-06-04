@@ -81,16 +81,31 @@ export function applyCanvasFilter(
 
     // Instead of overlaying sepia, we remap ALL pixels to warm brown tones
     // Even blacks become warm dark brown
-    // Step 6 — SEPIA REMAP — only for presets that want it
+    // Step 6 — COLOR REMAP
     if (adj.sepiaRemap) {
-      const sepiaMix = 0.95
       const newLuma = 0.299 * r + 0.587 * g + 0.114 * b
-      const sr = newLuma * 1.1 + 0.08
-      const sg = newLuma * 0.85
-      const sb = newLuma * 0.55 + 0.02
-      r = r * (1 - sepiaMix) + sr * sepiaMix
-      g = g * (1 - sepiaMix) + sg * sepiaMix
-      b = b * (1 - sepiaMix) + sb * sepiaMix
+
+      // Check temperature to decide warm (sepia) vs cool (cyan/green)
+      if (adj.temperature < 0) {
+        // Cyan/green remap — Y2K gel look
+        // Shadows go deep cyan-black, highlights go bright cyan-white
+        const sr = newLuma * 0.55 + 0.02   // red heavily reduced
+        const sg = newLuma * 1.1 + 0.05    // green boosted
+        const sb = newLuma * 1.0 + 0.08    // blue boosted = cyan cast
+        const mix = 0.92
+        r = r * (1 - mix) + sr * mix
+        g = g * (1 - mix) + sg * mix
+        b = b * (1 - mix) + sb * mix
+      } else {
+        // Warm sepia remap — golden hour
+        const sepiaMix = 0.95
+        const sr = newLuma * 1.1 + 0.08
+        const sg = newLuma * 0.85
+        const sb = newLuma * 0.55 + 0.02
+        r = r * (1 - sepiaMix) + sr * sepiaMix
+        g = g * (1 - sepiaMix) + sg * sepiaMix
+        b = b * (1 - sepiaMix) + sb * sepiaMix
+      }
     }
 
     // Step 7 — fade (lift blacks)
@@ -456,5 +471,35 @@ export const FILM_PRESETS: Preset[] = [
       sepiaRemap: true,
     },
     filter: "brightness(1.05) contrast(1.3) saturate(0.1) sepia(1) hue-rotate(8deg)",
+  },
+  {
+    id: "green-gel",
+    name: "Green Gel",
+    image: "/presets/green-gel.jpg",
+    adjustments: {
+      temperature: -30,
+      tint: -20,
+      exposure: -5,
+      contrast: 20,
+      highlight: -10,
+      shadows: -15,
+      saturation: -20,
+      grain: 45,
+      sharpness: 0,
+      blur: 20,
+      fisheye: 0,
+      fade: 5,
+      hue: 0,
+      lightLeakOpacity: 40,
+      lightLeakColor: "#ffffff",
+      lightLeakPosition: "center-right",
+      dust: 0,
+      dateStamp: false,
+      dateStampColor: "#ff8800",
+      shadowTintColor: "#000000",
+      highlightTintColor: "#000000",
+      sepiaRemap: true,
+    },
+    filter: "none",
   },
 ]

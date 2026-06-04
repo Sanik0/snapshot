@@ -75,6 +75,8 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             // No zoom change at all — stays at whatever user set
         }
     }
+
+
     useEffect(() => {
         onExport(handleExport)
     }, [])
@@ -388,11 +390,26 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             setSplitPos(x * 100)
         }
         const onMouseUp = () => setIsDraggingSplit(false)
+
+        // Touch support
+        const onTouchMove = (e: TouchEvent) => {
+            if (!isDraggingSplit || !canvasRef.current) return
+            const rect = canvasRef.current.getBoundingClientRect()
+            const x = Math.max(0, Math.min(1, (e.touches[0].clientX - rect.left) / rect.width))
+            setSplitPos(x * 100)
+        }
+        const onTouchEnd = () => setIsDraggingSplit(false)
+
         window.addEventListener("mousemove", onMouseMove)
         window.addEventListener("mouseup", onMouseUp)
+        window.addEventListener("touchmove", onTouchMove)
+        window.addEventListener("touchend", onTouchEnd)
+
         return () => {
             window.removeEventListener("mousemove", onMouseMove)
             window.removeEventListener("mouseup", onMouseUp)
+            window.removeEventListener("touchmove", onTouchMove)
+            window.removeEventListener("touchend", onTouchEnd)
         }
     }, [isDraggingSplit])
 
@@ -493,164 +510,176 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                 src={image}
                                 alt="original"
                                 className="absolute inset-0 w-full h-full object-cover"
+                                style={{ opacity: selectedFrame ? 0 : 1 }}
                                 draggable={false}
                             />
 
                             {/* Edited side */}
+                            tsx
                             <div
                                 className="absolute inset-0 overflow-hidden pointer-events-none"
-                                style={{ width: `${splitPos}%` }}
+                                style={{ width: selectedFrame ? "100%" : `${splitPos}%` }}
                             >
-                                {/* Processed canvas — pixel-level color grading */}
-                                {/* Regular filtered image — shown when no pixel processing needed */}
-                                {!adjustments.sepiaRemap && (
-                                    <img
-                                        src={image}
-                                        alt="edited"
-                                        className="absolute inset-0 h-full object-cover object-left"
+                                {/* Black base — prevents bleed from original underneath */}
+                                <div className="absolute inset-0 bg-black" style={{ zIndex: 0 }} />
+
+                                {/* Inner isolation wrapper */}
+                                <div className="absolute inset-0" style={{ isolation: "isolate", zIndex: 1 }}>
+
+                                    {/* Regular filtered image */}
+                                    {!adjustments.sepiaRemap && (
+                                        <img
+                                            src={image}
+                                            alt="edited"
+                                            className="absolute inset-0 h-full object-cover object-left"
+                                            style={{
+                                                width: `${canvasWidth}px`,
+                                                maxWidth: "none",
+                                                filter: liveFilter,
+                                                display: adjustments.fisheye > 0 ? "none" : "block",
+                                            }}
+                                            draggable={false}
+                                        />
+                                    )}
+
+                                    {/* Processed canvas — shown only when pixel processing needed */}
+                                    {adjustments.sepiaRemap && (
+                                        <canvas
+                                            ref={processedCanvasRef}
+                                            className="absolute inset-0 pointer-events-none"
+                                            style={{
+                                                width: `${canvasWidth}px`,
+                                                height: "100%",
+                                                maxWidth: "none",
+                                                objectFit: "cover",
+                                                objectPosition: "left",
+                                                display: adjustments.fisheye > 0 ? "none" : "block",
+                                            }}
+                                        />
+                                    )}
+
+                                    {/* Fisheye canvas */}
+                                    <canvas
+                                        ref={fisheyeCanvasRef}
+                                        className="absolute inset-0 h-full object-cover object-left pointer-events-none"
                                         style={{
                                             width: `${canvasWidth}px`,
                                             maxWidth: "none",
                                             filter: liveFilter,
-                                            display: adjustments.fisheye > 0 ? "none" : "block",
-                                        }}
-                                        draggable={false}
-                                    />
-                                )}
-
-                                {/* Processed canvas — shown only when pixel processing needed */}
-                                {adjustments.sepiaRemap && (
-                                    <canvas
-                                        ref={processedCanvasRef}
-                                        className="absolute inset-0 pointer-events-none"
-                                        style={{
-                                            width: `${canvasWidth}px`,
-                                            height: "100%",
-                                            maxWidth: "none",
-                                            objectFit: "cover",
-                                            objectPosition: "left",
-                                            display: adjustments.fisheye > 0 ? "none" : "block",
+                                            display: adjustments.fisheye > 0 ? "block" : "none",
                                         }}
                                     />
-                                )}
 
-                                {/* Fisheye canvas — only shows when fisheye > 0 */}
-                                <canvas
-                                    ref={fisheyeCanvasRef}
-                                    className="absolute inset-0 h-full object-cover object-left pointer-events-none"
-                                    style={{
-                                        width: `${canvasWidth}px`,
-                                        maxWidth: "none",
-                                        filter: liveFilter,
-                                        display: adjustments.fisheye > 0 ? "block" : "none",
-                                    }}
-                                />
-
-                                {/* Grain — always mounted */}
-                                <canvas
-                                    ref={grainCanvasRef}
-                                    className="absolute inset-0 pointer-events-none"
-                                    style={{
-                                        width: `${canvasWidth}px`,
-                                        maxWidth: "none",
-                                        height: "100%",
-                                        opacity: adjustments.grain > 0 ? (adjustments.grain / 100) * 0.9 : 0,
-                                        mixBlendMode: "soft-light",
-                                        imageRendering: "pixelated",
-                                        transition: "opacity 0.2s",
-                                    }}
-                                />
-
-                                {/* Dust and scratches */}
-                                <canvas
-                                    ref={dustCanvasRef}
-                                    className="absolute inset-0 pointer-events-none"
-                                    style={{
-                                        width: `${canvasWidth}px`,
-                                        maxWidth: "none",
-                                        height: "100%",
-                                        opacity: adjustments.dust > 0 ? (adjustments.dust / 100) * 0.8 : 0,
-                                        mixBlendMode: "screen",
-                                        imageRendering: "pixelated",
-                                        transition: "opacity 0.2s",
-                                    }}
-                                />
-
-                                {/* Date stamp */}
-                                {adjustments.dateStamp && (
+                                    {/* Grain */}
                                     <canvas
-                                        ref={dateStampRef}
+                                        ref={grainCanvasRef}
                                         className="absolute inset-0 pointer-events-none"
                                         style={{
                                             width: `${canvasWidth}px`,
                                             maxWidth: "none",
                                             height: "100%",
+                                            opacity: adjustments.grain > 0 ? (adjustments.grain / 100) * 0.9 : 0,
+                                            mixBlendMode: "soft-light",
+                                            imageRendering: "pixelated",
+                                            transition: "opacity 0.2s",
                                         }}
                                     />
-                                )}
 
-                                {/* Fisheye circle vignette */}
-                                {adjustments.fisheye > 0 && (
-                                    <div
-                                        className="absolute inset-0 pointer-events-none z-10"
+                                    {/* Dust and scratches */}
+                                    <canvas
+                                        ref={dustCanvasRef}
+                                        className="absolute inset-0 pointer-events-none"
                                         style={{
                                             width: `${canvasWidth}px`,
                                             maxWidth: "none",
-                                            background: `radial-gradient(ellipse at center, transparent ${55 - adjustments.fisheye * 0.3}%, rgba(0,0,0,0.6) ${75 - adjustments.fisheye * 0.2}%, rgba(0,0,0,0.95) 100%)`,
+                                            height: "100%",
+                                            opacity: adjustments.dust > 0 ? (adjustments.dust / 100) * 0.8 : 0,
+                                            mixBlendMode: "screen",
+                                            imageRendering: "pixelated",
+                                            transition: "opacity 0.2s",
                                         }}
                                     />
-                                )}
 
-                                {/* Light Leak */}
-                                {adjustments.lightLeakOpacity > 0 && (() => {
-                                    const pos = adjustments.lightLeakPosition
-                                    const gradientMap: Record<string, string> = {
-                                        "top-right": `radial-gradient(ellipse at 100% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                        "top-left": `radial-gradient(ellipse at 0% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                        "bottom-right": `radial-gradient(ellipse at 100% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                        "bottom-left": `radial-gradient(ellipse at 0% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                        "center-left": `radial-gradient(ellipse at 0% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
-                                        "center-right": `radial-gradient(ellipse at 100% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
-                                        "horizontal": `linear-gradient(to bottom, transparent 20%, ${adjustments.lightLeakColor}99 45%, ${adjustments.lightLeakColor} 50%, ${adjustments.lightLeakColor}99 55%, transparent 80%)`,
-                                    }
-                                    return (
-                                        <div
-                                            className="absolute inset-0 pointer-events-none z-20"
+                                    {/* Date stamp */}
+                                    {adjustments.dateStamp && (
+                                        <canvas
+                                            ref={dateStampRef}
+                                            className="absolute inset-0 pointer-events-none"
                                             style={{
                                                 width: `${canvasWidth}px`,
                                                 maxWidth: "none",
-                                                background: gradientMap[pos] ?? gradientMap["top-right"],
-                                                opacity: adjustments.lightLeakOpacity / 100,
-                                                mixBlendMode: "screen",
+                                                height: "100%",
                                             }}
                                         />
-                                    )
-                                })()}
+                                    )}
 
-                                {/* Vignette — always mounted */}
-                                <div
-                                    className="absolute inset-0 pointer-events-none"
-                                    style={{
-                                        width: `${canvasWidth}px`,
-                                        maxWidth: "none",
-                                        background: `radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,${(adjustments.vignette / 100) * 1.8}) 75%, rgba(0,0,0,${(adjustments.vignette / 100) * 2.2}) 100%)`,
-                                        transition: "opacity 0.2s",
-                                    }}
-                                />
+                                    {/* Fisheye circle vignette */}
+                                    {adjustments.fisheye > 0 && (
+                                        <div
+                                            className="absolute inset-0 pointer-events-none z-10"
+                                            style={{
+                                                width: `${canvasWidth}px`,
+                                                maxWidth: "none",
+                                                background: `radial-gradient(ellipse at center, transparent ${55 - adjustments.fisheye * 0.3}%, rgba(0,0,0,0.6) ${75 - adjustments.fisheye * 0.2}%, rgba(0,0,0,0.95) 100%)`,
+                                            }}
+                                        />
+                                    )}
+
+                                    {/* Light Leak */}
+                                    {adjustments.lightLeakOpacity > 0 && (() => {
+                                        const pos = adjustments.lightLeakPosition
+                                        const gradientMap: Record<string, string> = {
+                                            "top-right": `radial-gradient(ellipse at 100% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                            "top-left": `radial-gradient(ellipse at 0% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                            "bottom-right": `radial-gradient(ellipse at 100% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                            "bottom-left": `radial-gradient(ellipse at 0% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                            "center-left": `radial-gradient(ellipse at 0% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
+                                            "center-right": `radial-gradient(ellipse at 100% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
+                                            "horizontal": `linear-gradient(to bottom, transparent 20%, ${adjustments.lightLeakColor}99 45%, ${adjustments.lightLeakColor} 50%, ${adjustments.lightLeakColor}99 55%, transparent 80%)`,
+                                        }
+                                        return (
+                                            <div
+                                                className="absolute inset-0 pointer-events-none z-20"
+                                                style={{
+                                                    width: `${canvasWidth}px`,
+                                                    maxWidth: "none",
+                                                    background: gradientMap[pos] ?? gradientMap["top-right"],
+                                                    opacity: adjustments.lightLeakOpacity / 100,
+                                                    mixBlendMode: "screen",
+                                                }}
+                                            />
+                                        )
+                                    })()}
+
+                                    {/* Vignette */}
+                                    <div
+                                        className="absolute inset-0 pointer-events-none"
+                                        style={{
+                                            width: `${canvasWidth}px`,
+                                            maxWidth: "none",
+                                            background: `radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,${(adjustments.vignette / 100) * 1.8}) 75%, rgba(0,0,0,${(adjustments.vignette / 100) * 2.2}) 100%)`,
+                                            transition: "opacity 0.2s",
+                                        }}
+                                    />
+
+                                </div>
                             </div>
 
                             {/* Split line */}
-                            <div
-                                className="absolute top-0 bottom-0 w-px bg-white/80 z-10"
-                                style={{ left: `${splitPos}%` }}
-                            >
+                            {!selectedFrame && (
                                 <div
-                                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center cursor-col-resize shadow-lg z-20"
-                                    onMouseDown={(e) => { e.preventDefault(); setIsDraggingSplit(true) }}
+                                    className="absolute top-0 bottom-0 w-px bg-white/80 z-10"
+                                    style={{ left: `${splitPos}%` }}
                                 >
-                                    <span className="material-icons text-white" style={{ fontSize: "0.9rem" }}>unfold_more</span>
+                                    <div
+                                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center cursor-col-resize shadow-lg z-20"
+                                        onMouseDown={(e) => { e.preventDefault(); setIsDraggingSplit(true) }}
+                                        onTouchStart={(e) => { e.preventDefault(); setIsDraggingSplit(true) }}
+                                    >
+                                        <span className="material-icons text-white" style={{ fontSize: "0.9rem" }}>unfold_more</span>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Labels 
                             <div className="absolute top-3 left-3 px-2 py-1 rounded bg-black/50 text-[10px] text-white/60 font-medium tracking-wider uppercase backdrop-blur-sm">
@@ -680,36 +709,38 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             {/* Zoom toolbar */}
             <div className="flex items-center justify-between px-4 py-2 border-t border-white/10 bg-neutral-primary">
                 <div className="flex items-center gap-2">
-                    <button onClick={() => setZoom(z => Math.min(maxZoom, z + 5))}
+                    <button onClick={() => setZoom(z => Math.max(10, z - 5))}
                         className="text-white/50 hover:text-white/90 transition-colors"
                     >
                         <span className="material-icons" style={{ fontSize: "1rem" }}>remove</span>
                     </button>
                     <input type="range" min={10} max={maxZoom} value={zoom}
                         onChange={(e) => setZoom(Number(e.target.value))}
-                        className="w-20 accent-blue-500 cursor-pointer"
+                        className="w-50 accent-blue-500 cursor-pointer"
                     />
-                    <button onClick={() => setZoom(z => Math.max(10, z - 5))}
+                    <button onClick={() => setZoom(z => Math.min(maxZoom, z + 5))}
                         className="text-white/50 hover:text-white/90 transition-colors"
                     >
                         <span className="material-icons" style={{ fontSize: "1rem" }}>add</span>
                     </button>
                     <span className="text-xs text-white/40 w-10 tabular-nums">{zoom}%</span>
                 </div>
+                {/* 
+                        <div className="flex items-center gap-3 text-white/30">
+                            {imageDimensions.w > 0 && (
+                                <span className="text-xs tabular-nums">
+                                    {imageDimensions.w} × {imageDimensions.h}px
+                                </span>
+                            )}
+                            <div className="w-px h-4 bg-white/10" />
+                            {["fit_screen", "undo", "redo", "refresh"].map(icon => (
+                                <button key={icon} className="hover:text-white/70 transition-colors">
+                                    <span className="material-icons" style={{ fontSize: "1rem" }}>{icon}</span>
+                                </button>
+                            ))}
+                        </div>
+                */ }
 
-                <div className="flex items-center gap-3 text-white/30">
-                    {imageDimensions.w > 0 && (
-                        <span className="text-xs tabular-nums">
-                            {imageDimensions.w} × {imageDimensions.h}px
-                        </span>
-                    )}
-                    <div className="w-px h-4 bg-white/10" />
-                    {["fit_screen", "undo", "redo", "refresh"].map(icon => (
-                        <button key={icon} className="hover:text-white/70 transition-colors">
-                            <span className="material-icons" style={{ fontSize: "1rem" }}>{icon}</span>
-                        </button>
-                    ))}
-                </div>
 
                 <div className="flex items-center gap-2">
                     <button

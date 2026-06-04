@@ -287,6 +287,7 @@ export function Sidebar({
                             { id: "/frames/frame7.png", name: "Kodak1" },
                             { id: "/frames/frame8.png", name: "Film" },
                             { id: "/frames/frame10.png", name: "Film" },
+                            { id: "/frames/frame11.png", name: "Smiley" },
                         ].map(({ id, name }) => (
                             <button
                                 key={id}

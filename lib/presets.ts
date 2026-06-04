@@ -339,8 +339,8 @@ export const FILM_PRESETS: Preset[] = [
   },
   {
     id: "overexposed-leak",
-    name: "Burned",
-    image: "/presets/overexposed-leak.jpg",
+    name: "Digi Leak",
+    image: "/cameras/digicam.png",
     adjustments: {
       temperature: 30,
       tint: -5,
@@ -369,7 +369,7 @@ export const FILM_PRESETS: Preset[] = [
   },
   {
     id: "polaroid",
-    name: "Polaroid",
+    name: "Polarom X",
     image: "/cameras/polaroid.png",
     adjustments: {
       temperature: 25,
@@ -399,8 +399,8 @@ export const FILM_PRESETS: Preset[] = [
   },
   {
     id: "polaroid-cool",
-    name: "Polaroid X",
-    image: "/presets/polaroid-cool.jpg",
+    name: "Polaroma Fade",
+    image: "/cameras/fade.png",
     adjustments: {
       temperature: -55,
       tint: -15,

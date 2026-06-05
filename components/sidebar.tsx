@@ -146,7 +146,6 @@ export function Sidebar({
                         onChange={v => onChange("lightLeakOpacity", v)}
                     />
                 </SidebarGroup>
-
                 <div className="px-4 pb-3">
                     <p className="text-[10px] font-semibold tracking-widest text-white/30 uppercase mb-3">Color</p>
                     <div className="flex gap-2 flex-wrap">
@@ -182,7 +181,6 @@ export function Sidebar({
                         </label>
                     </div>
                 </div>
-
                 <div className="px-4 pb-4">
                     <p className="text-[10px] font-semibold tracking-widest text-white/30 uppercase mb-3">Position</p>
                     <div className="grid grid-cols-3 gap-2">
@@ -208,6 +206,32 @@ export function Sidebar({
                         ))}
                     </div>
                 </div>
+
+                
+                <SidebarGroup label="RAINBOW STREAK">
+                    <SliderRow
+                        label="Opacity"
+                        value={adjustments.rainbowLeakOpacity}
+                        min={0} max={100}
+                        trackClass="bg-gradient-to-r from-red-500 via-green-400 to-blue-500"
+                        onChange={v => onChange("rainbowLeakOpacity", v)}
+                    />
+                    <SliderRow
+                        label="Width"
+                        value={adjustments.rainbowLeakWidth}
+                        min={5} max={100}
+                        trackClass="bg-gradient-to-r from-white/10 to-white/60"
+                        onChange={v => onChange("rainbowLeakWidth", v)}
+                    />
+                    <SliderRow
+                        label="Angle"
+                        value={adjustments.rainbowLeakAngle}
+                        min={0} max={360}
+                        trackClass="bg-gradient-to-r from-white/10 to-white/50"
+                        onChange={v => onChange("rainbowLeakAngle", v)}
+                    />
+                </SidebarGroup>
+ra
             </SidebarSection>
 
             <SidebarSection title="Film Effects">
@@ -271,8 +295,8 @@ export function Sidebar({
                         <button
                             onClick={() => onFrameChange(null)}
                             className={`aspect-[3/4] rounded border flex items-center justify-center transition-all ${selectedFrame === null
-                                    ? "border-white/40 bg-white/10"
-                                    : "border-white/10 hover:border-white/20"
+                                ? "border-white/40 bg-white/10"
+                                : "border-white/10 hover:border-white/20"
                                 }`}
                         >
                             <span className="text-[9px] text-white/40 font-medium tracking-wider uppercase">None</span>
@@ -293,8 +317,8 @@ export function Sidebar({
                                 key={id}
                                 onClick={() => onFrameChange(id)}
                                 className={`aspect-[3/4] rounded border overflow-hidden transition-all ${selectedFrame === id
-                                        ? "border-white/40"
-                                        : "border-white/10 hover:border-white/20"
+                                    ? "border-white/40"
+                                    : "border-white/10 hover:border-white/20"
                                     }`}
                             >
                                 <img

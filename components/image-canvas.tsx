@@ -652,6 +652,39 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                         )
                                     })()}
 
+                                    {/* Rainbow light leak */}
+                                    {adjustments.rainbowLeakOpacity > 0 && (() => {
+                                        const w = adjustments.rainbowLeakWidth / 100  // 0.1 to 1.0
+                                        const center = 50  // center point of streak
+                                        const half = (w * 60) / 2  // half-width in percentage points
+
+                                        return (
+                                            <div
+                                                className="absolute inset-0 pointer-events-none z-20"
+                                                style={{
+                                                    width: `${canvasWidth}px`,
+                                                    maxWidth: "none",
+                                                    background: `linear-gradient(
+                                                        ${adjustments.rainbowLeakAngle}deg,
+                                                        transparent 0%,
+                                                        transparent ${center - half}%,
+                                                        rgba(255,0,0,0.2) ${center - half + 2}%,
+                                                        rgba(255,100,0,0.25) ${center - half * 0.7}%,
+                                                        rgba(255,255,0,0.25) ${center - half * 0.3}%,
+                                                        rgba(0,255,0,0.25) ${center}%,
+                                                        rgba(0,200,255,0.25) ${center + half * 0.3}%,
+                                                        rgba(0,0,255,0.2) ${center + half * 0.7}%,
+                                                        rgba(150,0,255,0.2) ${center + half - 2}%,
+                                                        transparent ${center + half}%,
+                                                        transparent 100%
+                                                    )`,
+                                                    opacity: adjustments.rainbowLeakOpacity / 100,
+                                                    mixBlendMode: "screen",
+                                                }}
+                                            />
+                                        )
+                                    })()}
+
                                     {/* Vignette */}
                                     <div
                                         className="absolute inset-0 pointer-events-none"

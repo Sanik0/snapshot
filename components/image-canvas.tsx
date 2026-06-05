@@ -685,6 +685,69 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                         )
                                     })()}
 
+                                    {/* Camcorder overlay */}
+                                    {(adjustments as any).camcorderEffect && (
+                                        <div
+                                            className="absolute inset-0 pointer-events-none z-25"
+                                            style={{ width: `${canvasWidth}px`, maxWidth: "none" }}
+                                        >
+                                            {/* Black bar top */}
+                                            <div className="absolute top-0 left-0 right-0 bg-black" style={{ height: "8%" }} />
+
+                                            {/* Black bar bottom */}
+                                            <div className="absolute bottom-0 left-0 right-0 bg-black" style={{ height: "4%" }} />
+
+                                            {/* HUD text */}
+                                            <div
+                                                className="absolute top-0 left-0 right-0 flex items-center justify-between px-3"
+                                                style={{
+                                                    height: "8%",
+                                                    fontFamily: "'Courier New', monospace",
+                                                    fontSize: "clamp(8px, 1.5vw, 14px)",
+                                                    color: "#00eeff",
+                                                    fontWeight: "bold",
+                                                    letterSpacing: "0.05em",
+                                                    textShadow: "0 0 6px #00eeff",
+                                                }}
+                                            >
+                                                <span>1/15</span>
+                                                <span>3.3</span>
+                                                <span>108-0019</span>
+                                            </div>
+
+                                            {/* Scanlines */}
+                                            <div
+                                                className="absolute inset-0"
+                                                style={{
+                                                    background: `repeating-linear-gradient(
+                    to bottom,
+                    transparent 0px,
+                    transparent 2px,
+                    rgba(0,0,0,0.12) 2px,
+                    rgba(0,0,0,0.12) 3px
+                )`,
+                                                }}
+                                            />
+
+                                            {/* Screen edge vignette */}
+                                            <div
+                                                className="absolute inset-0"
+                                                style={{
+                                                    background: "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.5) 100%)",
+                                                }}
+                                            />
+
+                                            {/* Slight green tint on midtones — the LCD glow */}
+                                            <div
+                                                className="absolute inset-0"
+                                                style={{
+                                                    background: "radial-gradient(ellipse at 50% 40%, rgba(0,255,100,0.06) 0%, transparent 70%)",
+                                                    mixBlendMode: "screen",
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+
                                     {/* Vignette */}
                                     <div
                                         className="absolute inset-0 pointer-events-none"

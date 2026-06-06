@@ -39,8 +39,8 @@ export default function Home() {
         <nav className="bg-neutral-primary px-0 md:px-4 flex w-full border-b border-white/30">
           <div className="w-full flex flex-wrap gap-5 items-center justify-between mx-auto p-4">
             <a href="https://flowbite.com/" className="flex items-center space-x-3 rtl:space-x-reverse">
-              <img src="https://flowbite.com/docs/images/logo.svg" className="h-7" alt="Flowbite Logo" />
-              <span className="self-center text-xl text-heading font-semibold whitespace-nowrap">SnapShot</span>
+              <img src="/polaroma-logo.svg" alt="Polaroma" className="h-8" />
+              <span className="self-center text-xl text-heading font-semibold whitespace-nowrap">Polaroma</span>
             </a>
             <div className="flex gap-3 items-center">
               <button type="button" onClick={() => setSidebarOpen(o => !o)} className="md:hidden text-white/60 hover:text-white/90 transition-colors w-9 h-9 flex items-center justify-center rounded border border-white/10">

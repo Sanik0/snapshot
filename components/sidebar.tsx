@@ -305,12 +305,12 @@ export function Sidebar({
                         {/* Frame options */}
                         {[
                             { id: "/frames/frame9.png", name: "Polaroid" },
-                            { id: "/frames/frame4.png", name: "Instax" },
-                            { id: "/frames/frame10.png", name: "Film" },
-                            { id: "/frames/frame11.png", name: "Smiley" },
-                            { id: "/frames/frame13.png", name: "Smiley" },
-                            { id: "/frames/frame15.png", name: "Smiley" },
-                            { id: "/frames/frame16.png", name: "Manga" },
+                            { id: "/frames/frame2.png", name: "Cat" },
+                            { id: "/frames/frame3.png", name: "Tattoo" },
+                            { id: "/frames/frame4.png", name: "Nirvana" },
+                            { id: "/frames/frame13.png", name: "Kiss" },
+                            { id: "/frames/frame5.png", name: "Peace" },
+                            { id: "/frames/frame6.png", name: "xoxo" },
                             { id: "/frames/frame12.png", name: "Cats" },
                         ].map(({ id, name }) => (
                             <button

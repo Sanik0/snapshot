@@ -102,15 +102,23 @@ export function applyCanvasFilter(
         b = b * (1 - mix) + sb * mix
 
       } else if (adj.hue < -15) {
-        // Olive/green-gold remap — warm highlights, cool green shadows
-        const mix = 0.65  // was 0.88 — lower = less aggressive, original colors peek through
-
+        // Olive/green-gold remap
+        const mix = 0.65
         const shadowStrength = Math.max(0, 1 - newLuma * 2)
         const highlightStrength = Math.max(0, newLuma * 2 - 1)
-
         const sr = newLuma * 0.85 + highlightStrength * 0.15
-        const sg = newLuma * 0.90 + shadowStrength * 0.04  // was 0.95/0.08 — less green push
-        const sb = newLuma * 0.60 - shadowStrength * 0.02  // was 0.55/-0.05 — slightly more blue allowed
+        const sg = newLuma * 0.90 + shadowStrength * 0.04
+        const sb = newLuma * 0.60 - shadowStrength * 0.02
+        r = r * (1 - mix) + sr * mix
+        g = g * (1 - mix) + sg * mix
+        b = b * (1 - mix) + sb * mix
+
+      } else if (adj.saturation < -80 && adj.temperature > 0) {
+        // CCTV — cool grey with slight purple-blue cast
+        const mix = 0.93
+        const sr = newLuma * 0.90  // red reduced
+        const sg = newLuma * 0.88  // green reduced
+        const sb = newLuma * 1.05  // blue slightly boosted = cool purple-grey cast
         r = r * (1 - mix) + sr * mix
         g = g * (1 - mix) + sg * mix
         b = b * (1 - mix) + sb * mix
@@ -790,5 +798,40 @@ export const FILM_PRESETS: Preset[] = [
       camcorderEffect: false,
     },
     filter: "brightness(0.88) contrast(1.35) saturate(1.45) hue-rotate(-8deg)",
+  },
+  {
+    id: "cctv",
+    name: "CCTV",
+    image: "/presets/cctv.jpg",
+    adjustments: {
+      temperature: -10,
+      tint: -5,
+      exposure: -5,
+      contrast: 35,
+      highlight: 25,
+      shadows: -30,
+      saturation: -85,
+      grain: 85,
+      sharpness: 0,
+      blur: 3,
+      fisheye: 0,
+      fade: 5,
+      hue: 10,
+      lightLeakOpacity: 0,
+      lightLeakColor: "#ff6600",
+      lightLeakPosition: "top-right",
+      dust: 0,
+      dateStamp: false,
+      dateStampColor: "#ffffff",
+      shadowTintColor: "#000000",
+      highlightTintColor: "#000000",
+      sepiaRemap: true,
+      crtEffect: false,
+      rainbowLeakOpacity: 0,
+      rainbowLeakAngle: 135,
+      rainbowLeakWidth: 40,
+      camcorderEffect: true,
+    },
+    filter: "none",
   },
 ]

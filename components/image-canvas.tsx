@@ -38,6 +38,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
     const dustCanvasRef = useRef<HTMLCanvasElement>(null)
     const sharpCanvasRef = useRef<HTMLCanvasElement>(null)
     const imageElementRef = useRef<HTMLImageElement | null>(null)
+    const cameraInputRef = useRef<HTMLInputElement>(null)
 
     const handleExport = async () => {
         const container = canvasRef.current
@@ -359,6 +360,15 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         reader.readAsDataURL(file)
     }, [])
 
+    const [menuOpen, setMenuOpen] = useState(false)
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => setMenuOpen(false)
+        if (menuOpen) window.addEventListener("click", handleClickOutside)
+        return () => window.removeEventListener("click", handleClickOutside)
+    }, [menuOpen])
+
     useEffect(() => {
         const handleResize = () => {
             if (!canvasRef.current || !imageDimensions.w) return
@@ -447,10 +457,74 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         <div className="w-full h-full flex flex-col overflow-hidden">
             {fileName && (
                 <div className="px-4 py-2 flex items-center justify-between border-b border-white/10">
-                    <span className="text-xs text-white/50">{fileName}</span>
-                    <button className="text-white/30 hover:text-white/60 transition-colors">
-                        <span className="material-icons" style={{ fontSize: "1.1rem" }}>more_horiz</span>
-                    </button>
+                    <span className="text-xs text-white/50 truncate max-w-[70%]">{fileName}</span>
+                    <div className="relative">
+                        <button
+                            className="text-white/30 hover:text-white/60 transition-colors"
+                            onClick={(e) => { e.stopPropagation(); setMenuOpen(o => !o) }}
+                        >
+                            <span className="material-icons" style={{ fontSize: "1.1rem" }}>more_horiz</span>
+                        </button>
+
+                        {menuOpen && (
+                            <div className="absolute right-0 top-full mt-1 bg-[#1c1c1c] border border-white/10 rounded-xl overflow-hidden z-50 w-48 shadow-2xl">
+                                {/* Pick another photo */}
+                                <button
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-xs text-white/70 hover:bg-white/5 transition-colors text-left"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setMenuOpen(false)
+                                        fileInputRef.current?.click()
+                                    }}
+                                >
+                                    <span className="material-icons text-white/40" style={{ fontSize: "1rem" }}>photo_library</span>
+                                    Pick another photo
+                                </button>
+
+                                {/* Use camera */}
+                                <button
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-xs text-white/70 hover:bg-white/5 transition-colors text-left"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setMenuOpen(false)
+                                        cameraInputRef.current?.click()
+                                    }}
+                                >
+                                    <span className="material-icons text-white/40" style={{ fontSize: "1rem" }}>photo_camera</span>
+                                    Use camera
+                                </button>
+
+                                <div className="border-t border-white/5" />
+
+                                {/* Remove photo */}
+                                <button
+                                    className="w-full flex items-center gap-3 px-4 py-3 text-xs text-red-400/70 hover:bg-white/5 transition-colors text-left"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setMenuOpen(false)
+                                        setImage(null)
+                                        setFileName("")
+                                        setImageDimensions({ w: 0, h: 0 })
+                                        imageElementRef.current = null
+                                        if (fileInputRef.current) fileInputRef.current.value = ""
+                                    }}
+                                >
+                                    <span className="material-icons text-red-400/40" style={{ fontSize: "1rem" }}>delete_outline</span>
+                                    Remove photo
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Hidden camera input */}
+                    <input
+                        ref={cameraInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]) }}
+                    />
                 </div>
             )}
 

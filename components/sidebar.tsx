@@ -231,7 +231,7 @@ export function Sidebar({
                         onChange={v => onChange("rainbowLeakAngle", v)}
                     />
                 </SidebarGroup>
-ra
+
             </SidebarSection>
 
             <SidebarSection title="Film Effects">
@@ -306,12 +306,12 @@ ra
                         {[
                             { id: "/frames/frame9.png", name: "Polaroid" },
                             { id: "/frames/frame4.png", name: "Instax" },
-                            { id: "/frames/frame3.png", name: "Vintage" },
-                            { id: "/frames/frame5.png", name: "Kodak" },
-                            { id: "/frames/frame7.png", name: "Kodak1" },
-                            { id: "/frames/frame8.png", name: "Film" },
                             { id: "/frames/frame10.png", name: "Film" },
                             { id: "/frames/frame11.png", name: "Smiley" },
+                            { id: "/frames/frame13.png", name: "Smiley" },
+                            { id: "/frames/frame15.png", name: "Smiley" },
+                            { id: "/frames/frame16.png", name: "Manga" },
+                            { id: "/frames/frame12.png", name: "Cats" },
                         ].map(({ id, name }) => (
                             <button
                                 key={id}

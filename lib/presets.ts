@@ -802,7 +802,7 @@ export const FILM_PRESETS: Preset[] = [
   {
     id: "cctv",
     name: "CCTV",
-    image: "/presets/cctv.jpg",
+    image: "/cameras/cctv.png",
     adjustments: {
       temperature: -10,
       tint: -5,

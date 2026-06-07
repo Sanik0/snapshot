@@ -38,8 +38,8 @@ export default function Home() {
       <main className="w-full overflow-hidden">
         <nav className="bg-neutral-primary px-0 md:px-4 flex w-full border-b border-white/30">
           <div className="w-full flex flex-wrap gap-5 items-center justify-between mx-auto p-4">
-            <a href="https://flowbite.com/" className="flex items-center space-x-3 rtl:space-x-reverse">
-              <img src="/polaroma-logo.svg" alt="Polaroma" className="h-8" />
+            <a href="https://flowbite.com/" className="flex items-center gap-2 rtl:space-x-reverse">
+              <img src="/polaroma-logo.svg" alt="Polaroma" className="h-9" />
               <span className="self-center text-xl text-heading font-semibold whitespace-nowrap">Polaroma</span>
             </a>
             <div className="flex gap-3 items-center">

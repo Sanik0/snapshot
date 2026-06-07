@@ -33,3 +33,19 @@ body {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+@layer utilities {
+  .photo-grid {
+    display: grid;
+    gap: 6px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 200px 160px 160px;
+  }
+
+  @media (min-width: 768px) {
+    .photo-grid {
+      grid-template-columns: 2.2fr 1fr 1.4fr;
+      grid-template-rows: 220px 120px 120px;
+    }
+  }
+}

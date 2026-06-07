@@ -31,6 +31,7 @@ export type Preset = {
     rainbowLeakAngle: number
     rainbowLeakWidth: number
     camcorderEffect: boolean
+    cctvRemap: boolean
   }
   filter: string
 }
@@ -91,7 +92,17 @@ export function applyCanvasFilter(
     if (adj.sepiaRemap && !(adj as any).crtEffect) {
       const newLuma = 0.299 * r + 0.587 * g + 0.114 * b
 
-      if (adj.temperature < 0) {
+      if (adj.cctvRemap) {
+        // CCTV — cool grey with slight purple-blue cast
+        const mix = 0.93
+        const sr = newLuma * 0.90
+        const sg = newLuma * 0.88
+        const sb = newLuma * 1.05
+        r = r * (1 - mix) + sr * mix
+        g = g * (1 - mix) + sg * mix
+        b = b * (1 - mix) + sb * mix
+
+      } else if (adj.temperature < 0) {
         // Cyan/green remap — Y2K gel
         const mix = 0.92
         const sr = newLuma * 0.55 + 0.02
@@ -113,18 +124,8 @@ export function applyCanvasFilter(
         g = g * (1 - mix) + sg * mix
         b = b * (1 - mix) + sb * mix
 
-      } else if (adj.saturation < -80 && adj.temperature > 0) {
-        // CCTV — cool grey with slight purple-blue cast
-        const mix = 0.93
-        const sr = newLuma * 0.90  // red reduced
-        const sg = newLuma * 0.88  // green reduced
-        const sb = newLuma * 1.05  // blue slightly boosted = cool purple-grey cast
-        r = r * (1 - mix) + sr * mix
-        g = g * (1 - mix) + sg * mix
-        b = b * (1 - mix) + sb * mix
-
       } else {
-        // Warm sepia remap — golden hour
+        // Warm sepia remap — golden hour, amber gel, vintage
         const mix = 0.95
         const sr = newLuma * 1.1 + 0.08
         const sg = newLuma * 0.85
@@ -134,6 +135,7 @@ export function applyCanvasFilter(
         b = b * (1 - mix) + sb * mix
       }
     }
+
     // Step 7 — fade
     const fade = (adj.fade ?? 0) / 100 * 0.35
     r = r * (1 - fade) + fade
@@ -255,6 +257,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "brightness(1.15) contrast(0.85) saturate(0.8) sepia(0.25) hue-rotate(5deg)",
   },
@@ -280,6 +283,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "contrast(0.95) saturate(0.9) brightness(1.1) hue-rotate(-5deg)",
   },
@@ -315,6 +319,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "brightness(1.1) contrast(0.92) saturate(1.35) hue-rotate(5deg)",
   },
@@ -350,6 +355,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "brightness(1.4) contrast(0.8) saturate(0.7) sepia(0.2)",
   },
@@ -385,6 +391,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: true,
+      cctvRemap: false,
     },
     filter: "brightness(1.08) contrast(1.2) saturate(1.35) hue-rotate(5deg)",
   },
@@ -420,6 +427,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "brightness(0.90) contrast(0.70) saturate(0.25) sepia(0.2) hue-rotate(-25deg)",
   },
@@ -455,6 +463,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "brightness(1.05) contrast(1.3) saturate(0.1) sepia(1) hue-rotate(8deg)",
   },
@@ -490,6 +499,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
 
     },
     filter: "none",
@@ -526,6 +536,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "brightness(1.12) contrast(0.9) saturate(1.4) hue-rotate(5deg)",
   },
@@ -551,6 +562,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "grayscale(1) contrast(1.25) brightness(0.95)",
   },
@@ -586,6 +598,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "brightness(1.05) contrast(1.25) saturate(1.2) sepia(0.15) hue-rotate(8deg)",
   },
@@ -621,6 +634,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "none",
   },
@@ -656,6 +670,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "none",
   },
@@ -691,6 +706,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "none",
   },
@@ -726,6 +742,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 145,
       rainbowLeakWidth: 25,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "brightness(1.08) contrast(1.4) saturate(1.5) hue-rotate(15deg)",
   },
@@ -761,6 +778,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "none",
   },
@@ -796,6 +814,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 110,
       rainbowLeakWidth: 15,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "none",
   },
@@ -831,6 +850,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 160,
       rainbowLeakWidth: 20,
       camcorderEffect: false,
+      cctvRemap: false,
     },
     filter: "brightness(0.88) contrast(1.35) saturate(1.45) hue-rotate(-8deg)",
   },
@@ -866,6 +886,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: true,
+      cctvRemap: true,
     },
     filter: "none",
   },

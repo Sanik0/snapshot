@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { ImageCanvas } from "@/components/image-canvas"
 import { Sidebar } from "@/components/sidebar"
 import { FILM_PRESETS, buildFilter, type Preset } from "@/lib/presets"
@@ -29,6 +29,15 @@ export default function Home() {
     })
   }
 
+  const [showTooltip, setShowTooltip] = useState(false)
+
+  useEffect(() => {
+    const seen = localStorage.getItem("tooltipSeen")
+    if (!seen && window.innerWidth < 768) {
+      setTimeout(() => setShowTooltip(true), 1500)
+    }
+  }, [])
+
   const handleAdjustmentChange = (key: keyof Adjustments, val: number | string | boolean) => {
     setAdjustments(prev => ({ ...prev, [key]: val }))
   }
@@ -43,9 +52,64 @@ export default function Home() {
               <span className="self-center text-xl text-heading font-semibold whitespace-nowrap">Polaroma</span>
             </a>
             <div className="flex gap-3 items-center">
-              <button type="button" onClick={() => setSidebarOpen(o => !o)} className="md:hidden text-white/60 hover:text-white/90 transition-colors w-9 h-9 flex items-center justify-center rounded border border-white/10">
-                <span className="material-icons" style={{ fontSize: "1.1rem" }}>tune</span>
-              </button>
+              {/* Tune button with tooltip */}
+              <div className="relative md:hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSidebarOpen(o => !o)
+                    setShowTooltip(false)
+                    localStorage.setItem("tooltipSeen", "true")
+                  }}
+                  className="text-white/60 hover:text-white/90 transition-colors w-9 h-9 flex items-center justify-center rounded border border-white/10"
+                >
+                  <span className="material-icons" style={{ fontSize: "1.1rem" }}>tune</span>
+                </button>
+
+                {/* Tooltip */}
+                {showTooltip && (
+                  <div className="absolute right-0 top-12 z-50 w-56">
+                    {/* Arrow pointing up */}
+                    <div className="absolute -top-2 right-3 w-0 h-0"
+                      style={{
+                        borderLeft: "8px solid transparent",
+                        borderRight: "8px solid transparent",
+                        borderBottom: "8px solid rgba(255,255,255,0.95)",
+                      }}
+                    />
+                    <div className="bg-white/95 text-black rounded-xl p-3 shadow-2xl">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-600 text-black mb-0.5">Edit your photo</p>
+                          <p className="text-[11px] text-black/60 leading-relaxed">
+                            Tap here to adjust filters, add frames, light leaks and more.
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setShowTooltip(false)
+                            localStorage.setItem("tooltipSeen", "true")
+                          }}
+                          className="text-black/30 hover:text-black/60 shrink-0 mt-0.5"
+                        >
+                          <span className="material-icons" style={{ fontSize: "0.9rem" }}>close</span>
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSidebarOpen(true)
+                          setShowTooltip(false)
+                          localStorage.setItem("tooltipSeen", "true")
+                        }}
+                        className="mt-2 w-full text-[11px] font-500 bg-blue-500 text-white rounded-lg py-1.5 px-3"
+                      >
+                        Open adjustments
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
               <button type="button" className="text-white/90 bg-black hover:bg-white/20 box-border border-white/30 border-[0.5px] focus:ring-4 focus:ring-blue-300 shadow-xs font-medium cursor-pointer leading-5 rounded-md text-sm px-3 py-2 focus:outline-none">Share</button>
               <button onClick={() => exportFnRef.current?.()} type="button" className="text-black bg-blue-600 hover:bg-blue-700 box-border border border-transparent focus:ring-4 focus:ring-blue-300 shadow-xs font-medium cursor-pointer leading-5 rounded-md text-sm px-3 py-2 focus:outline-none">Save / Export</button>
             </div>
@@ -91,6 +155,6 @@ export default function Home() {
           </>
         </div>
       </main>
-    </div>
+    </div >
   )
 }

@@ -39,28 +39,26 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
     const sharpCanvasRef = useRef<HTMLCanvasElement>(null)
     const imageElementRef = useRef<HTMLImageElement | null>(null)
     const cameraInputRef = useRef<HTMLInputElement>(null)
+    const splitLineRef = useRef<HTMLDivElement>(null)
 
-    const handleExport = async () => {
+    const handleExportRef = useRef<() => void>(() => { })
+
+    const handleExport = useCallback(async () => {
         const container = canvasRef.current
         if (!container) return
 
-        const prevSplitPos = splitPos
+        if (splitLineRef.current) splitLineRef.current.style.visibility = "hidden"
 
-        // Hide split UI
-        const splitLine = container.querySelector(".absolute.top-0.bottom-0.w-px") as HTMLElement
-        const editedLabel = container.querySelector(".absolute.top-3.left-3") as HTMLElement
-        const originalLabel = container.querySelector(".absolute.top-3.right-3") as HTMLElement
-        if (splitLine) splitLine.style.display = "none"
-        if (editedLabel) editedLabel.style.display = "none"
-        if (originalLabel) originalLabel.style.display = "none"
+        const editedSide = container.querySelector("[data-edited-side]") as HTMLElement
+        if (editedSide) editedSide.style.width = "100%"
 
-        setSplitPos(100)
-        await new Promise(r => setTimeout(r, 50))
+        await new Promise(r => setTimeout(r, 100))
 
         try {
             const dataUrl = await toJpeg(container, {
                 quality: 0.95,
-                pixelRatio: 4, // high res without changing zoom
+                pixelRatio: 4,
+                skipFonts: true,
             })
             const link = document.createElement("a")
             link.download = "snapshot.jpg"
@@ -69,17 +67,19 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         } catch (err) {
             console.error("Export failed", err)
         } finally {
-            if (splitLine) splitLine.style.display = ""
-            if (editedLabel) editedLabel.style.display = ""
-            if (originalLabel) originalLabel.style.display = ""
-            setSplitPos(prevSplitPos)
-            // No zoom change at all — stays at whatever user set
+            if (splitLineRef.current) splitLineRef.current.style.visibility = ""
+            if (editedSide) editedSide.style.width = ""
         }
-    }
+    }, [])
 
-
+    // Update the ref every render so page.tsx always calls the latest version
     useEffect(() => {
-        onExport(handleExport)
+        handleExportRef.current = handleExport
+    })
+
+    // Register with parent only once
+    useEffect(() => {
+        onExport(() => handleExportRef.current())
     }, [])
 
     useEffect(() => {
@@ -603,6 +603,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                             {/* Edited side */}
                             tsx
                             <div
+                                data-edited-side
                                 className="absolute inset-0 overflow-hidden pointer-events-none"
                                 style={{ width: selectedFrame ? "100%" : `${splitPos}%` }}
                             >
@@ -851,6 +852,8 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                             {/* Split line */}
                             {!selectedFrame && (
                                 <div
+                                    ref={splitLineRef}
+                                    data-split-line
                                     className="absolute top-0 bottom-0 w-px bg-white/80 z-10"
                                     style={{ left: `${splitPos}%` }}
                                 >
@@ -863,16 +866,6 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     </div>
                                 </div>
                             )}
-
-                            {/* Labels 
-                            <div className="absolute top-3 left-3 px-2 py-1 rounded bg-black/50 text-[10px] text-white/60 font-medium tracking-wider uppercase backdrop-blur-sm">
-                                Edited
-                            </div>
-                            <div className="absolute top-3 right-3 px-2 py-1 rounded bg-black/50 text-[10px] text-white/60 font-medium tracking-wider uppercase backdrop-blur-sm">
-                                Original
-                            </div>
-
-                            */}
 
                         </div>
 

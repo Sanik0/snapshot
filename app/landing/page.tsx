@@ -121,40 +121,30 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <div className="photo-grid w-full">
+                    <div className="grid gap-0 grid-cols-2 md:grid-cols-[2.2fr_1fr_1.4fr] grid-rows-[200px_160px_160px] md:grid-rows-[220px_120px_120px] w-full overflow-hidden rounded-[20px]">
 
                         {/* Cell 1 — tall left, spans 3 rows */}
-                        <div className="relative overflow-hidden row-span-3 rounded-tl-[40px] rounded-tr-[4px] rounded-br-[32px] rounded-bl-[4px]">
+                        <div className="relative overflow-hidden row-span-3 rounded-tl-[40px] rounded-tr-[4px] rounded-br-[40px] rounded-bl-[4px]">
                             <img src="https://picsum.photos/seed/photo1/600/900" alt="" className="w-full h-full object-cover" />
                         </div>
 
                         {/* Cell 2 — top middle */}
-                        <div className="relative overflow-hidden rounded-tl-[4px] rounded-tr-[48px] rounded-br-[4px] rounded-bl-[4px]">
+                        <div className="relative col-span-2 overflow-hidden rounded-tl-[40px] rounded-tr-[48px] rounded-br-[4px] rounded-bl-[4px]">
                             <img src="https://picsum.photos/seed/photo2/400/400" alt="" className="w-full h-full object-cover" />
                         </div>
 
-                        {/* Cell 3 — top right (desktop only) */}
-                        <div className="relative overflow-hidden hidden md:block rounded-tl-[4px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[36px]">
-                            <img src="https://picsum.photos/seed/photo3/500/400" alt="" className="w-full h-full object-cover" />
-                        </div>
-
                         {/* Cell 4 — middle row */}
-                        <div className="relative overflow-hidden rounded-tl-[4px] rounded-tr-[4px] rounded-br-[40px] rounded-bl-[4px]">
+                        <div className="relative row-span-2 overflow-hidden rounded-tl-[40px] rounded-tr-[4px] rounded-br-[40px] rounded-bl-[4px]">
                             <img src="https://picsum.photos/seed/photo4/400/300" alt="" className="w-full h-full object-cover" />
                         </div>
 
-                        {/* Cell 5 — middle right (desktop only) */}
-                        <div className="relative overflow-hidden hidden md:block rounded-tl-[28px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[4px]">
-                            <img src="https://picsum.photos/seed/photo5/500/300" alt="" className="w-full h-full object-cover" />
-                        </div>
-
                         {/* Cell 6 — bottom middle */}
-                        <div className="relative overflow-hidden rounded-tl-[4px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[4px]">
+                        <div className="relative overflow-hidden rounded-tl-[4px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[40px]">
                             <img src="https://picsum.photos/seed/photo6/400/300" alt="" className="w-full h-full object-cover" />
                         </div>
 
                         {/* Cell 7 — bottom right (desktop only) */}
-                        <div className="relative overflow-hidden hidden md:block rounded-tl-[4px] rounded-tr-[4px] rounded-br-[44px] rounded-bl-[4px]">
+                        <div className="relative overflow-hidden hidden md:block rounded-tl-[4px] rounded-tr-[40px] rounded-br-[44px] rounded-bl-[4px]">
                             <img src="https://picsum.photos/seed/photo7/500/300" alt="" className="w-full h-full object-cover" />
                         </div>
 
@@ -214,7 +204,7 @@ export default function Home() {
                     >
                         <div className="flex items-end justify-between gap-4">
                             <h2
-                                className="font-black text-[#1a1a1a] leading-tight"
+                                className="font-semibold text-[#1a1a1a] leading-tight"
                                 style={{ fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", letterSpacing: "-0.02em" }}
                             >
                                 Benefits of<br />working with me
@@ -228,7 +218,7 @@ export default function Home() {
                         {benefits.map((b, i) => (
                             <div
                                 key={i}
-                                className="relative flex gap-10 flex-col justify-between p-5 md:p-6"
+                                className="relative flex gap-10 flex-col justify-between p-6 md:p-7"
                                 style={{
                                     background: "#D95F2B",
                                     borderRadius: "40px",

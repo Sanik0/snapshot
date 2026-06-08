@@ -40,6 +40,9 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
     const imageElementRef = useRef<HTMLImageElement | null>(null)
     const cameraInputRef = useRef<HTMLInputElement>(null)
     const splitLineRef = useRef<HTMLDivElement>(null)
+    const [showCamera, setShowCamera] = useState(false)
+    const videoRef = useRef<HTMLVideoElement>(null)
+    const streamRef = useRef<MediaStream | null>(null)
 
     const handleExportRef = useRef<() => void>(() => { })
 
@@ -453,6 +456,50 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         carouselRef.current.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" })
     }
 
+    const openCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment" }
+            })
+            streamRef.current = stream
+            setShowCamera(true)
+            setTimeout(() => {
+                if (videoRef.current) videoRef.current.srcObject = stream
+            }, 100)
+        } catch {
+            // Camera not available — fall back to file picker
+            const input = document.createElement("input")
+            input.type = "file"
+            input.accept = "image/*"
+            input.onchange = (ev) => {
+                const file = (ev.target as HTMLInputElement).files?.[0]
+                if (file) handleFile(file)
+            }
+            input.click()
+        }
+    }
+
+    const capturePhoto = () => {
+        const video = videoRef.current
+        if (!video) return
+        const canvas = document.createElement("canvas")
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        canvas.getContext("2d")!.drawImage(video, 0, 0)
+        canvas.toBlob((blob) => {
+            if (!blob) return
+            const file = new File([blob], "camera-photo.jpg", { type: "image/jpeg" })
+            handleFile(file)
+            closeCamera()
+        }, "image/jpeg", 0.95)
+    }
+
+    const closeCamera = () => {
+        streamRef.current?.getTracks().forEach(t => t.stop())
+        streamRef.current = null
+        setShowCamera(false)
+    }
+
     return (
         <div className="w-full h-full flex flex-col overflow-hidden">
             {fileName && (
@@ -494,15 +541,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         setMenuOpen(false)
-                                        const input = document.createElement("input")
-                                        input.type = "file"
-                                        input.accept = "image/*"
-                                        input.capture = "environment"  // ignored on desktop, opens camera on mobile
-                                        input.onchange = (ev) => {
-                                            const file = (ev.target as HTMLInputElement).files?.[0]
-                                            if (file) handleFile(file)
-                                        }
-                                        input.click()
+                                        openCamera()
                                     }}
                                 >
                                     <span className="material-icons text-white/40" style={{ fontSize: "1rem" }}>photo_camera</span>
@@ -956,6 +995,41 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                     ))}
                 </div>
             </div>
+
+            {/* Camera modal */}
+            {showCamera && (
+                <div className="fixed inset-0 bg-black z-50 flex flex-col">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 bg-black/80">
+                        <button onClick={closeCamera} className="text-white/60 hover:text-white transition-colors">
+                            <span className="material-icons">close</span>
+                        </button>
+                        <span className="text-xs text-white/50 tracking-widest uppercase">Camera</span>
+                        <div className="w-8" />
+                    </div>
+
+                    {/* Video feed */}
+                    <div className="flex-1 relative overflow-hidden">
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            className="absolute inset-0 w-full h-full object-cover"
+                        />
+                    </div>
+
+                    {/* Capture button */}
+                    <div className="flex items-center justify-center py-8 bg-black/80">
+                        <button
+                            onClick={capturePhoto}
+                            className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center transition-transform active:scale-95"
+                        >
+                            <div className="w-12 h-12 rounded-full bg-white" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

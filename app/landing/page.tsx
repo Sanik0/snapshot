@@ -313,34 +313,49 @@ const StatCounter: FC<StatItem & { triggered: boolean }> = ({
 // ── FaqAccordion ─────────────────────────────────────────────
 const FaqAccordion: FC<{ items: FaqItem[] }> = ({ items }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
-  const toggle = (i: number) => setOpenIndex(openIndex === i ? null : i)
+  const toggle = (i: number) => setOpenIndex((prev) => (prev === i ? null : i))
 
   return (
     <div className="space-y-3">
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className={`rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden reveal delay-${Math.min((i + 1) * 100, 500)}`}
-        >
-          <button
-            onClick={() => toggle(i)}
-            className="w-full flex items-center justify-between px-5 py-4 text-left"
+      {items.map((item, i) => {
+        const isOpen = openIndex === i
+        return (
+          <div
+            key={i}
+            className="rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden reveal"
+            style={{ transitionDelay: `${Math.min((i + 1) * 0.08, 0.5)}s` }}
           >
-            <span className="font-display font-semibold text-white text-sm">
-              {item.q}
-            </span>
-            <span
-              className="text-gray-400 transition-transform duration-300 inline-block"
-              style={{ transform: openIndex === i ? 'rotate(45deg)' : 'rotate(0deg)' }}
+            <button
+              onClick={() => toggle(i)}
+              className="w-full flex items-center justify-between px-5 py-4 text-left"
             >
-              <IconPlus />
-            </span>
-          </button>
-          <div className={`faq-answer px-5 ${openIndex === i ? 'open' : ''}`}>
-            <p className="text-sm text-gray-400 leading-relaxed">{item.a}</p>
+              <span className="font-display font-semibold text-white text-sm pr-4">
+                {item.q}
+              </span>
+              <svg
+                className="w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-300"
+                style={{ transform: isOpen ? 'rotate(45deg)' : 'rotate(0deg)' }}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
+            {/* Pure inline-style accordion — no CSS class toggling, no SSR mismatch */}
+            <div
+              style={{
+                maxHeight: isOpen ? '400px' : '0px',
+                overflow: 'hidden',
+                transition: 'max-height 0.4s ease',
+                paddingBottom: isOpen ? '1rem' : '0',
+              }}
+            >
+              <p className="text-sm text-gray-400 leading-relaxed px-5">{item.a}</p>
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -680,8 +695,15 @@ export default function PolaromaPage() {
             </div>
           </div>
 
-          {/* Mobile menu */}
-          <div className={`mobile-menu md:hidden ${mobileOpen ? 'open' : ''}`}>
+          {/* Mobile menu — inline style only, no CSS class toggling */}
+          <div
+            className="md:hidden overflow-hidden"
+            style={{
+              maxHeight: mobileOpen ? '480px' : '0px',
+              opacity: mobileOpen ? 1 : 0,
+              transition: 'max-height 0.4s ease, opacity 0.3s ease',
+            }}
+          >
             <div className="py-4 border-t border-white/5 flex flex-col gap-1">
               {[
                 { id: 'features', label: 'Features' },
@@ -1162,14 +1184,20 @@ export default function PolaromaPage() {
 
           {/* Slider */}
           <div className="relative overflow-hidden reveal delay-200">
+            {/* Track: flex row, each slide is exactly 100% of the wrapper width */}
             <div
-              className="testimonial-track"
-              style={{ transform: `translateX(-${testimonialIndex * 100}%)` }}
+              style={{
+                display: 'flex',
+                transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                transform: `translateX(-${testimonialIndex * 100}%)`,
+                willChange: 'transform',
+              }}
             >
               {TESTIMONIAL_SLIDES.map((slide, slideIdx) => (
                 <div
                   key={slideIdx}
-                  className="w-full flex-shrink-0 grid md:grid-cols-3 gap-5 px-1"
+                  style={{ minWidth: '100%', width: '100%' }}
+                  className="grid md:grid-cols-3 gap-5 px-1"
                 >
                   {slide.map((item, itemIdx) => (
                     <TestimonialCard

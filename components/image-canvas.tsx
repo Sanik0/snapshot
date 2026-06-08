@@ -474,27 +474,35 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         setMenuOpen(false)
-                                        if (fileInputRef.current) {
-                                            fileInputRef.current.removeAttribute("capture")
-                                            fileInputRef.current.value = ""
-                                            fileInputRef.current.click()
+                                        // Create a fresh input to avoid any cached state
+                                        const input = document.createElement("input")
+                                        input.type = "file"
+                                        input.accept = "image/*"
+                                        input.onchange = (ev) => {
+                                            const file = (ev.target as HTMLInputElement).files?.[0]
+                                            if (file) handleFile(file)
                                         }
+                                        input.click()
                                     }}
                                 >
                                     <span className="material-icons text-white/40" style={{ fontSize: "1rem" }}>photo_library</span>
                                     Pick another photo
                                 </button>
-
                                 {/* Use camera */}
                                 <button
                                     className="w-full flex items-center gap-3 px-4 py-3 text-xs text-white/70 hover:bg-white/5 transition-colors text-left"
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         setMenuOpen(false)
-                                        if (cameraInputRef.current) {
-                                            cameraInputRef.current.value = ""
-                                            cameraInputRef.current.click()
+                                        const input = document.createElement("input")
+                                        input.type = "file"
+                                        input.accept = "image/*"
+                                        input.capture = "environment"  // ignored on desktop, opens camera on mobile
+                                        input.onchange = (ev) => {
+                                            const file = (ev.target as HTMLInputElement).files?.[0]
+                                            if (file) handleFile(file)
                                         }
+                                        input.click()
                                     }}
                                 >
                                     <span className="material-icons text-white/40" style={{ fontSize: "1rem" }}>photo_camera</span>

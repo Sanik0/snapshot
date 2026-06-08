@@ -191,7 +191,7 @@ export default function Home() {
                 className="w-full px-4 md:px-8 py-12"
                 style={{ background: "#EDE8DE", fontFamily: "'Inter', sans-serif" }}
             >
-                <div className="flex flex-col md:flex-row gap-0 items-stretch max-w-6xl mx-auto">
+                <div className="flex flex-col md:flex-row gap-0 items-stretch max-w-7xl mx-auto">
 
                     {/* Left card — label */}
                     <div
@@ -218,7 +218,7 @@ export default function Home() {
                         {benefits.map((b, i) => (
                             <div
                                 key={i}
-                                className="relative flex gap-10 flex-col justify-between p-6 md:p-7"
+                                className="relative flex gap-15 flex-col justify-between p-6 md:p-7"
                                 style={{
                                     background: "#D95F2B",
                                     borderRadius: "40px",
@@ -244,8 +244,7 @@ export default function Home() {
                                     </div>
                                 )}
                                 <p
-                                    className="text-[#EDE8DE] font-semibold leading-snug"
-                                    style={{ fontSize: "clamp(0.78rem, 1.4vw, 0.95rem)" }}
+                                    className="text-[#EDE8DE] font-medium text-base md:text-xl leading-snug"
                                 >
                                     {b.text}
                                 </p>
@@ -257,6 +256,70 @@ export default function Home() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+
+                </div>
+            </section>
+
+            {/* SECTION */}
+            <section
+                className="w-full max-w-7xl mx-auto px-4 md:px-8 py-30"
+                style={{ background: "#EDE8DE", fontFamily: "'Inter', sans-serif" }}
+            >
+                <div
+                    className="grid w-full"
+                    style={{
+                        gridTemplateColumns: "1.1fr 1.3fr 1.2fr",
+                        gridTemplateRows: "200px 320px",
+                    }}
+                >
+
+                    {/* Cell 1 — top left: dark title card */}
+                    <div
+                        className="relative flex flex-col justify-between p-6"
+                        style={{ background: "#1e1a10", borderRadius: "40px" }}
+                    >
+                        <h2
+                            className="font-black text-white leading-tight"
+                            style={{ fontSize: "clamp(1.4rem, 2.2vw, 1.9rem)", letterSpacing: "-0.02em" }}
+                        >
+                            My<br />works
+                        </h2>
+                        <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center self-end"
+                            style={{ border: "1.5px solid rgba(255,255,255,0.3)" }}
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="2" y="6" width="20" height="14" rx="3" />
+                                <circle cx="12" cy="13" r="3" />
+                                <path d="M8 6V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Cell 2 — top middle: couple on porch */}
+                    <div className="relative overflow-hidden" style={{ borderRadius: "40px" }}>
+                        <img src="https://picsum.photos/seed/couple1/500/400" alt="" className="w-full h-full object-cover" />
+                    </div>
+
+                    {/* Cell 3 — top right: blonde portrait */}
+                    <div className="relative overflow-hidden" style={{ borderRadius: "40px" }}>
+                        <img src="https://picsum.photos/seed/portrait1/480/400" alt="" className="w-full h-full object-cover" />
+                    </div>
+
+                    {/* Cell 4 — bottom left: family on couch */}
+                    <div className="relative overflow-hidden" style={{ borderRadius: "40px" }}>
+                        <img src="https://picsum.photos/seed/family1/500/560" alt="" className="w-full h-full object-cover" />
+                    </div>
+
+                    {/* Cell 5 — bottom middle: flowers/bokeh */}
+                    <div className="relative overflow-hidden" style={{ borderRadius: "40px" }}>
+                        <img src="https://picsum.photos/seed/flowers1/500/560" alt="" className="w-full h-full object-cover" />
+                    </div>
+
+                    {/* Cell 6 — bottom right: woman on chair */}
+                    <div className="relative overflow-hidden" style={{ borderRadius: "40px" }}>
+                        <img src="https://picsum.photos/seed/woman1/480/560" alt="" className="w-full h-full object-cover" />
                     </div>
 
                 </div>

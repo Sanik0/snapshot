@@ -585,19 +585,40 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             <div className="flex-1 flex items-center justify-center bg-black/60 overflow-hidden relative">
                 {!image ? (
                     <div
-                        className={`w-full h-full flex flex-col items-center justify-center gap-4 cursor-pointer transition-all ${isDraggingOver ? "bg-white/5" : ""}`}
+                        className={`w-full h-full flex flex-col items-center justify-center gap-6 transition-all ${isDraggingOver ? "bg-white/5" : ""}`}
                         onDragOver={(e) => { e.preventDefault(); setIsDraggingOver(true) }}
                         onDragLeave={() => setIsDraggingOver(false)}
                         onDrop={onDrop}
-                        onClick={() => fileInputRef.current?.click()}
                     >
+                        {/* Icon */}
                         <div className={`w-16 h-16 rounded-2xl border flex items-center justify-center transition-all ${isDraggingOver ? "border-blue-400/60 bg-blue-400/10" : "border-white/10 bg-white/5"}`}>
-                            <span className="material-icons text-white/40" style={{ fontSize: "1.8rem" }}>upload_file</span>
+                            <span className="material-icons text-white/40" style={{ fontSize: "1.8rem" }}>photo_camera</span>
                         </div>
+
                         <div className="text-center">
                             <p className="text-sm font-medium text-white/60">Drop your image here</p>
-                            <p className="text-xs text-white/25 mt-1">or click to browse — JPG, PNG, RAW</p>
+                            <p className="text-xs text-white/25 mt-1">or choose an option below</p>
                         </div>
+
+                        {/* Two buttons */}
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-xs font-medium text-white/60 hover:text-white/90"
+                            >
+                                <span className="material-icons" style={{ fontSize: "1rem" }}>photo_library</span>
+                                Browse photos
+                            </button>
+
+                            <button
+                                onClick={openCamera}
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-xs font-medium text-white/60 hover:text-white/90"
+                            >
+                                <span className="material-icons" style={{ fontSize: "1rem" }}>camera_alt</span>
+                                Use camera
+                            </button>
+                        </div>
+
                         <input
                             ref={fileInputRef}
                             type="file"

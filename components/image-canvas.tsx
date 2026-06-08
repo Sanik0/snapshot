@@ -474,7 +474,11 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         setMenuOpen(false)
-                                        cameraInputRef.current?.click()
+                                        if (fileInputRef.current) {
+                                            fileInputRef.current.removeAttribute("capture")
+                                            fileInputRef.current.value = ""
+                                            fileInputRef.current.click()
+                                        }
                                     }}
                                 >
                                     <span className="material-icons text-white/40" style={{ fontSize: "1rem" }}>photo_library</span>
@@ -484,21 +488,12 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                 {/* Use camera */}
                                 <button
                                     className="w-full flex items-center gap-3 px-4 py-3 text-xs text-white/70 hover:bg-white/5 transition-colors text-left"
-                                    onClick={async (e) => {
+                                    onClick={(e) => {
                                         e.stopPropagation()
                                         setMenuOpen(false)
-
-                                        // Try getUserMedia first for desktop camera
-                                        try {
-                                            const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-                                            stream.getTracks().forEach(t => t.stop()) // just checking if available
-                                            cameraInputRef.current?.click()
-                                        } catch {
-                                            // No camera available — fall back to file picker
-                                            if (fileInputRef.current) {
-                                                fileInputRef.current.value = ""
-                                                fileInputRef.current.click()
-                                            }
+                                        if (cameraInputRef.current) {
+                                            cameraInputRef.current.value = ""
+                                            cameraInputRef.current.click()
                                         }
                                     }}
                                 >

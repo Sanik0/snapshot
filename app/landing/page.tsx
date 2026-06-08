@@ -1,330 +1,1459 @@
-"use client"
+'use client'
 
-import { useState, useMemo, useRef, useEffect } from "react"
-import { ImageCanvas } from "@/components/image-canvas"
-import { Sidebar } from "@/components/sidebar"
-import { FILM_PRESETS, buildFilter, type Preset } from "@/lib/presets"
+import {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  type FC,
+  type ReactNode,
+} from 'react'
 
-type Adjustments = Preset["adjustments"] & {
-    vignette: number
+// ─────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────
+interface FaqItem {
+  q: string
+  a: string
 }
 
-export default function Home() {
+interface TestimonialItem {
+  stars: number
+  text: string
+  name: string
+  role: string
+  avatar: string
+}
 
-    const benefits = [
-        {
-            text: "I help you feel relaxed and natural in front of the camera",
-            icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="6" width="20" height="14" rx="3" />
-                    <circle cx="12" cy="13" r="3" />
-                    <path d="M8 6V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1" />
-                </svg>
-            ),
-        },
-        {
-            text: "I help you define your look and personal style",
-            icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z" />
-                </svg>
-            ),
-        },
-        {
-            text: "I select the style and location that fits you perfectly",
-            icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                    <circle cx="12" cy="9" r="2.5" />
-                </svg>
-            ),
-        },
-        {
-            text: "Always in touch before and after the shoot",
-            icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-                    <path d="M9 10h.01M12 10h.01M15 10h.01" />
-                </svg>
-            ),
-        },
-    ]
+interface FeatureItem {
+  color: string
+  iconColor: string
+  icon: ReactNode
+  title: string
+  desc: string
+}
 
-    return (
-        <div className="min-h-screen" style={{ background: "#EDE8DE", fontFamily: "'Inter', sans-serif" }}>
+interface StatItem {
+  count: number
+  suffix: string
+  label: string
+}
 
-            {/* ── NAV ── */}
-            <nav className="flex items-center justify-between px-4 md:px-8 py-4">
+interface PricingPlan {
+  name: string
+  price: { monthly: number; annual: number }
+  description: string
+  cta: string
+  popular: boolean
+  features: string[]
+  missing?: string[]
+}
 
-                {/* Logo */}
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#EDE8DE">
-                            <circle cx="12" cy="8" r="4" />
-                            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                        </svg>
-                    </div>
-                    <span className="text-[15px] font-semibold text-[#1a1a1a]">Алекс Романов</span>
-                </div>
+// ─────────────────────────────────────────────────────────────
+// Static Data
+// ─────────────────────────────────────────────────────────────
+const FAQ_ITEMS: FaqItem[] = [
+  {
+    q: 'What file formats does Polaroma support?',
+    a: 'Polaroma supports JPEG, PNG, TIFF, WebP, and RAW formats including CR2, NEF, ARW, DNG, and more. We process up to 50 megapixel images on the Pro plan.',
+  },
+  {
+    q: 'How long does it take to process a photo?',
+    a: 'Most single-photo edits are completed in 1–3 seconds. Batch processing 100 photos typically takes 2–3 minutes depending on file size and the complexity of edits applied.',
+  },
+  {
+    q: 'Can I use Polaroma commercially?',
+    a: 'Absolutely. All plans include commercial usage rights. Your edited photos are yours to use in client work, publications, social media, and print without any attribution required.',
+  },
+  {
+    q: 'Is there a free trial for the Pro plan?',
+    a: "Yes! The Pro plan includes a 14-day free trial with full access to all features. No credit card required to start. You'll only be charged when you decide to continue after the trial.",
+  },
+  {
+    q: 'Does Polaroma have an API?',
+    a: "Yes, our REST API is available on the Business plan. It allows you to integrate Polaroma's AI editing directly into your own applications, workflows, or custom tools. Full documentation is provided.",
+  },
+  {
+    q: 'Can I create and save my own presets?',
+    a: 'Pro and Business users can create unlimited custom presets by combining any of our AI adjustments and saving them. You can share presets with team members on the Business plan.',
+  },
+  {
+    q: 'How does the AI upscaling work?',
+    a: 'Our AI upscaling uses a diffusion-based super-resolution model trained on millions of photographs. It intelligently reconstructs fine detail, texture, and sharpness — not just interpolation. Results are typically indistinguishable from a native high-resolution shot.',
+  },
+]
 
-                {/* Links — desktop only */}
-                <div className="hidden md:flex items-center gap-7">
-                    {["Обо мне", "Портфолио", "Этапы", "Услуги"].map((item) => (
-                        <a key={item} href="#" className="text-[14px] text-[#1a1a1a] hover:opacity-60 transition-opacity">
-                            {item}
-                        </a>
-                    ))}
-                </div>
+const TESTIMONIAL_SLIDES: TestimonialItem[][] = [
+  [
+    {
+      stars: 5,
+      text: "Polaroma transformed my wedding photography workflow. What used to take 6 hours of editing now takes 20 minutes. My clients are blown away every time.",
+      name: 'Sarah Chen',
+      role: 'Wedding Photographer, NYC',
+      avatar: 'https://i.pravatar.cc/80?img=21',
+    },
+    {
+      stars: 5,
+      text: 'The AI style transfer is genuinely mind-blowing. I applied a Fuji Velvia film look to 300 travel photos in under 5 minutes. This used to be a week\'s work.',
+      name: 'Marcus Rivera',
+      role: 'Travel Photographer',
+      avatar: 'https://i.pravatar.cc/80?img=33',
+    },
+    {
+      stars: 5,
+      text: 'Portrait retouching that actually looks like a real human and not an AI doll. Finally. My model clients specifically request that I use Polaroma for their portfolios.',
+      name: 'Yuki Tanaka',
+      role: 'Fashion & Editorial Photographer',
+      avatar: 'https://i.pravatar.cc/80?img=47',
+    },
+  ],
+  [
+    {
+      stars: 5,
+      text: 'I run a real estate photography business. The AI enhancement makes every property look magazine-ready. My turnaround went from 2 days to 2 hours.',
+      name: 'David Park',
+      role: 'Real Estate Photographer',
+      avatar: 'https://i.pravatar.cc/80?img=15',
+    },
+    {
+      stars: 5,
+      text: 'The 4x upscaling is incredible. I restored old family photos from the 1960s and they look like they were shot yesterday. My grandmother cried seeing them.',
+      name: 'Emma Johansson',
+      role: 'Amateur Photographer, Sweden',
+      avatar: 'https://i.pravatar.cc/80?img=28',
+    },
+    {
+      stars: 5,
+      text: "Switched from Lightroom presets to Polaroma 6 months ago and never looked back. The AI understands context — it knows when to be subtle and when to be dramatic.",
+      name: 'Carlos Mendez',
+      role: 'Food & Product Photographer',
+      avatar: 'https://i.pravatar.cc/80?img=56',
+    },
+  ],
+]
 
-                {/* Social icon buttons */}
-                <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center cursor-pointer hover:opacity-75 transition-opacity">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EDE8DE" strokeWidth="1.8" strokeLinecap="round">
-                            <path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-16.5 7.5a2.25 2.25 0 0 0 .126 4.073l4.91 1.784 2.034 5.086a2.25 2.25 0 0 0 4.169-.351l3.283-12.45 3-5.857z" />
-                        </svg>
-                    </div>
-                    <div className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center cursor-pointer hover:opacity-75 transition-opacity">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EDE8DE" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-                            <path d="M9 10h.01M12 10h.01M15 10h.01" />
-                        </svg>
-                    </div>
-                </div>
-            </nav>
+const STATS: StatItem[] = [
+  { count: 12400, suffix: '+', label: 'Active photographers' },
+  { count: 2800000, suffix: '+', label: 'Photos processed' },
+  { count: 98, suffix: '%', label: 'Customer satisfaction' },
+  { count: 200, suffix: '+', label: 'AI styles available' },
+]
 
-            {/* ── HERO ── */}
-            <div className={"flex flex-col w-full items-center justify-center"}>
-                <div className="px-4 md:px-8 pt-20 w-full max-w-7xl pb-6">
-                    {/* Text row — stacked on mobile, side-by-side on md+ */}
-                    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-6">
-                        <h1
-                            className="font-semibold leading-[1.05] text-[#1a1a1a]"
-                            style={{ fontSize: "clamp(1.9rem, 5.5vw, 3.25rem)", letterSpacing: "-0.02em" }}
-                        >
-                            Один фотограф.<br />
-                            Сотни важных историй.
-                        </h1>
+const PRICING_PLANS: PricingPlan[] = [
+  {
+    name: 'Free',
+    price: { monthly: 0, annual: 0 },
+    description: 'Forever free',
+    cta: 'Get Started Free',
+    popular: false,
+    features: ['20 photo edits/month', '30 basic styles', '10 MP max export'],
+    missing: ['Batch processing', 'AI upscaling'],
+  },
+  {
+    name: 'Pro',
+    price: { monthly: 24, annual: 19 },
+    description: 'Billed annually ($228/yr)',
+    cta: 'Start Pro Trial',
+    popular: true,
+    features: [
+      'Unlimited edits',
+      '200+ AI styles',
+      '50 MP full-res export',
+      'Batch up to 100 photos',
+      '4× AI upscaling',
+      'Priority processing',
+    ],
+  },
+  {
+    name: 'Business',
+    price: { monthly: 59, annual: 49 },
+    description: 'Billed annually ($588/yr)',
+    cta: 'Start Business Trial',
+    popular: false,
+    features: [
+      'Everything in Pro',
+      'Batch up to 500 photos',
+      'API access',
+      'White-label exports',
+      'Team collaboration (5 seats)',
+      'Dedicated support',
+    ],
+  },
+]
 
-                        <div className="flex flex-col items-start gap-4 md:flex-shrink-0 md:pb-1">
-                            <p className="text-[13.5px] text-[#1a1a1a] leading-relaxed max-w-[220px]">
-                                Живые кадры с настроением.<br />
-                                Без лишнего — только ты и свет.
-                            </p>
-                            <button className="flex items-center gap-3 bg-[#1a1a1a] text-[#EDE8DE] rounded-full px-5 py-3 text-[13px] font-medium whitespace-nowrap hover:opacity-80 transition-opacity">
-                                Записаться на съёмку
-                                <span className="w-6 h-6 rounded-full bg-[#EDE8DE] flex items-center justify-center flex-shrink-0">
-                                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="#1a1a1a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M2 7h10M8 3l4 4-4 4" />
-                                    </svg>
-                                </span>
-                            </button>
-                        </div>
-                    </div>
+// ─────────────────────────────────────────────────────────────
+// Helper: animate counter
+// ─────────────────────────────────────────────────────────────
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
+  if (n >= 1_000) return Math.floor(n / 1_000) + 'K'
+  return Math.floor(n).toString()
+}
 
-                    <div className="grid gap-0 grid-cols-2 md:grid-cols-[2.2fr_1fr_1.4fr] grid-rows-[200px_160px_160px] md:grid-rows-[220px_120px_120px] w-full overflow-hidden rounded-[20px]">
+function useCountUp(target: number, suffix: string, triggered: boolean) {
+  const [display, setDisplay] = useState('0' + suffix)
 
-                        {/* Cell 1 — tall left, spans 3 rows */}
-                        <div className="relative overflow-hidden row-span-3 rounded-tl-[40px] rounded-tr-[4px] rounded-br-[40px] rounded-bl-[4px]">
-                            <img src="https://picsum.photos/seed/photo1/600/900" alt="" className="w-full h-full object-cover" />
-                        </div>
+  useEffect(() => {
+    if (!triggered) return
+    const duration = 2000
+    const start = performance.now()
+    const tick = (ts: number) => {
+      const elapsed = ts - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setDisplay(formatCount(Math.floor(eased * target)) + suffix)
+      if (progress < 1) requestAnimationFrame(tick)
+      else setDisplay(formatCount(target) + suffix)
+    }
+    requestAnimationFrame(tick)
+  }, [triggered, target, suffix])
 
-                        {/* Cell 2 — top middle */}
-                        <div className="relative col-span-2 overflow-hidden rounded-tl-[40px] rounded-tr-[48px] rounded-br-[4px] rounded-bl-[4px]">
-                            <img src="https://picsum.photos/seed/photo2/400/400" alt="" className="w-full h-full object-cover" />
-                        </div>
+  return display
+}
 
-                        {/* Cell 4 — middle row */}
-                        <div className="relative row-span-2 overflow-hidden rounded-tl-[40px] rounded-tr-[4px] rounded-br-[40px] rounded-bl-[4px]">
-                            <img src="https://picsum.photos/seed/photo4/400/300" alt="" className="w-full h-full object-cover" />
-                        </div>
+// ─────────────────────────────────────────────────────────────
+// Helper: useScrollReveal — attaches IntersectionObserver
+// ─────────────────────────────────────────────────────────────
+function useScrollReveal() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible')
+          }
+        })
+      },
+      { threshold: 0.12 },
+    )
+    const els = document.querySelectorAll(
+      '.reveal, .reveal-left, .reveal-right, .reveal-scale',
+    )
+    els.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+}
 
-                        {/* Cell 6 — bottom middle */}
-                        <div className="relative overflow-hidden rounded-tl-[4px] rounded-tr-[4px] rounded-br-[4px] rounded-bl-[40px]">
-                            <img src="https://picsum.photos/seed/photo6/400/300" alt="" className="w-full h-full object-cover" />
-                        </div>
+// ─────────────────────────────────────────────────────────────
+// SVG Icons (inlined for zero-dependency)
+// ─────────────────────────────────────────────────────────────
+const IconCheck = () => (
+  <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+  </svg>
+)
+const IconX = () => (
+  <svg className="w-4 h-4 flex-shrink-0 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+)
+const IconArrow = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+  </svg>
+)
+const IconBolt = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+  </svg>
+)
+const IconMoon = () => (
+  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z" />
+  </svg>
+)
+const IconSun = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+)
+const IconMenu = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+)
+const IconClose = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+)
+const IconPlus = () => (
+  <svg className="w-4 h-4 flex-shrink-0 ml-4 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+  </svg>
+)
+const LogoMark = () => (
+  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+  </svg>
+)
 
-                        {/* Cell 7 — bottom right (desktop only) */}
-                        <div className="relative overflow-hidden hidden md:block rounded-tl-[4px] rounded-tr-[40px] rounded-br-[44px] rounded-bl-[4px]">
-                            <img src="https://picsum.photos/seed/photo7/500/300" alt="" className="w-full h-full object-cover" />
-                        </div>
+// ─────────────────────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────────────────────
 
-                    </div>
-                </div>
+// ── StatCounter ──────────────────────────────────────────────
+const StatCounter: FC<StatItem & { triggered: boolean }> = ({
+  count,
+  suffix,
+  label,
+  triggered,
+}) => {
+  const display = useCountUp(count, suffix, triggered)
+  return (
+    <div className="text-center reveal">
+      <p className="font-display font-extrabold text-4xl lg:text-5xl gradient-text mb-2">
+        {display}
+      </p>
+      <p className="text-sm text-gray-400">{label}</p>
+    </div>
+  )
+}
+
+// ── FaqAccordion ─────────────────────────────────────────────
+const FaqAccordion: FC<{ items: FaqItem[] }> = ({ items }) => {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const toggle = (i: number) => setOpenIndex(openIndex === i ? null : i)
+
+  return (
+    <div className="space-y-3">
+      {items.map((item, i) => (
+        <div
+          key={i}
+          className={`rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden reveal delay-${Math.min((i + 1) * 100, 500)}`}
+        >
+          <button
+            onClick={() => toggle(i)}
+            className="w-full flex items-center justify-between px-5 py-4 text-left"
+          >
+            <span className="font-display font-semibold text-white text-sm">
+              {item.q}
+            </span>
+            <span
+              className="text-gray-400 transition-transform duration-300 inline-block"
+              style={{ transform: openIndex === i ? 'rotate(45deg)' : 'rotate(0deg)' }}
+            >
+              <IconPlus />
+            </span>
+          </button>
+          <div className={`faq-answer px-5 ${openIndex === i ? 'open' : ''}`}>
+            <p className="text-sm text-gray-400 leading-relaxed">{item.a}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── TestimonialCard ──────────────────────────────────────────
+const TestimonialCard: FC<{ item: TestimonialItem; featured?: boolean }> = ({
+  item,
+  featured,
+}) => (
+  <div
+    className={`p-6 rounded-2xl border card-hover ${
+      featured
+        ? 'border-blue-500/20 bg-blue-500/5'
+        : 'border-white/[0.08] bg-white/[0.03]'
+    }`}
+  >
+    <div className="flex gap-1 mb-3">
+      <span className="text-yellow-400">{'★'.repeat(item.stars)}</span>
+    </div>
+    <p className="text-sm text-gray-300 leading-relaxed mb-4">{item.text}</p>
+    <div className="flex items-center gap-3">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className="w-10 h-10 rounded-full object-cover"
+        src={item.avatar}
+        alt={item.name}
+      />
+      <div>
+        <p className="text-sm font-display font-bold text-white">{item.name}</p>
+        <p className="text-xs text-gray-400">{item.role}</p>
+      </div>
+    </div>
+  </div>
+)
+
+// ── HeroComparison ────────────────────────────────────────────
+const HeroComparison: FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const clipRef = useRef<HTMLDivElement>(null)
+  const dividerRef = useRef<HTMLDivElement>(null)
+  const draggingRef = useRef(false)
+  const pctRef = useRef(50)
+  const dirRef = useRef(-1)
+  const animRef = useRef<number>(0)
+
+  const setPosition = useCallback((clientX: number) => {
+    const container = containerRef.current
+    const clip = clipRef.current
+    const divider = dividerRef.current
+    if (!container || !clip || !divider) return
+    const rect = container.getBoundingClientRect()
+    const pct = Math.min(Math.max(((clientX - rect.left) / rect.width) * 100, 5), 95)
+    pctRef.current = pct
+    clip.style.width = pct + '%'
+    divider.style.left = pct + '%'
+  }, [])
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (draggingRef.current) setPosition(e.clientX)
+    }
+    const onMouseUp = () => { draggingRef.current = false }
+    const onTouchMove = (e: TouchEvent) => {
+      if (draggingRef.current) setPosition(e.touches[0].clientX)
+    }
+    const onTouchEnd = () => { draggingRef.current = false }
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    window.addEventListener('touchmove', onTouchMove)
+    window.addEventListener('touchend', onTouchEnd)
+
+    // Auto-pan animation
+    const autoAnim = () => {
+      if (!draggingRef.current) {
+        pctRef.current += dirRef.current * 0.15
+        if (pctRef.current < 30 || pctRef.current > 70) dirRef.current *= -1
+        if (clipRef.current) clipRef.current.style.width = pctRef.current + '%'
+        if (dividerRef.current) dividerRef.current.style.left = pctRef.current + '%'
+      }
+      animRef.current = requestAnimationFrame(autoAnim)
+    }
+    animRef.current = requestAnimationFrame(autoAnim)
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+      window.removeEventListener('touchmove', onTouchMove)
+      window.removeEventListener('touchend', onTouchEnd)
+      cancelAnimationFrame(animRef.current)
+    }
+  }, [setPosition])
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full select-none cursor-ew-resize"
+      style={{ aspectRatio: '4/3' }}
+      onMouseDown={(e) => {
+        draggingRef.current = true
+        setPosition(e.clientX)
+      }}
+      onTouchStart={(e) => {
+        draggingRef.current = true
+        setPosition(e.touches[0].clientX)
+      }}
+    >
+      {/* After image (full width, behind) */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="https://picsum.photos/seed/polaroma-after/800/600"
+        alt="After: AI Enhanced"
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ filter: 'saturate(1.4) contrast(1.1) brightness(0.95)' }}
+        draggable={false}
+      />
+      {/* Before image (clipped) */}
+      <div
+        ref={clipRef}
+        className="absolute inset-0 overflow-hidden"
+        style={{ width: '50%' }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="https://picsum.photos/seed/polaroma-after/800/600"
+          alt="Before: Original"
+          className="absolute inset-0 h-full object-cover"
+          style={{
+            width: '800px',
+            maxWidth: 'none',
+            filter: 'saturate(0.6) brightness(1.05)',
+          }}
+          draggable={false}
+        />
+      </div>
+      {/* Divider */}
+      <div
+        ref={dividerRef}
+        className="absolute inset-y-0 flex items-center"
+        style={{ left: '50%', transform: 'translateX(-50%)' }}
+      >
+        <div className="w-0.5 h-full bg-white/80" />
+        <div className="absolute w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center z-10 cursor-ew-resize">
+          <svg className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l-4 4 4 4M16 9l4 4-4 4" />
+          </svg>
+        </div>
+      </div>
+      {/* Labels */}
+      <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-xs text-white font-display font-bold pointer-events-none">
+        BEFORE
+      </div>
+      <div className="absolute top-3 right-3 px-2 py-1 bg-blue-500/80 backdrop-blur-sm rounded text-xs text-white font-display font-bold pointer-events-none">
+        AFTER
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main Page Component
+// ─────────────────────────────────────────────────────────────
+export default function PolaromaPage() {
+  // ── State ──────────────────────────────────────────────────
+  const [isDark, setIsDark] = useState(true)
+  const [scrolled, setScrolled] = useState(false)
+  const [showStickyCTA, setShowStickyCTA] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [testimonialIndex, setTestimonialIndex] = useState(0)
+  const [statTriggered, setStatTriggered] = useState(false)
+  const [annual, setAnnual] = useState(true)
+  const [email, setEmail] = useState('')
+  const [subscribed, setSubscribed] = useState(false)
+
+  const statsRef = useRef<HTMLElement>(null)
+
+  // ── Dark mode ──────────────────────────────────────────────
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark)
+    // Apply light mode overrides via data attribute
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
+  }, [isDark])
+
+  // ── Scroll listener ────────────────────────────────────────
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 20)
+      setShowStickyCTA(window.scrollY > 500)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // ── Stats IntersectionObserver ─────────────────────────────
+  useEffect(() => {
+    const el = statsRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setStatTriggered(true)
+          obs.disconnect()
+        }
+      },
+      { threshold: 0.3 },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  // ── Scroll reveal ──────────────────────────────────────────
+  useScrollReveal()
+
+  // ── Testimonial auto-slide ─────────────────────────────────
+  useEffect(() => {
+    const timer = setInterval(
+      () => setTestimonialIndex((i) => (i + 1) % TESTIMONIAL_SLIDES.length),
+      5000,
+    )
+    return () => clearInterval(timer)
+  }, [])
+
+  // ── Nav smooth scroll helper ───────────────────────────────
+  const scrollTo = (id: string) => {
+    setMobileOpen(false)
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  // ── Newsletter submit ──────────────────────────────────────
+  const handleSubscribe = () => {
+    if (email.includes('@')) setSubscribed(true)
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────────────────
+  return (
+    <div
+      className="min-h-screen overflow-x-hidden"
+      style={{
+        backgroundColor: isDark ? '#090912' : '#f8fafc',
+        color: isDark ? '#ffffff' : '#0f172a',
+      }}
+    >
+      {/* ══ STICKY CTA ═══════════════════════════════════════ */}
+      <div
+        className="sticky-cta fixed bottom-6 right-6 z-50"
+        style={{
+          opacity: showStickyCTA ? 1 : 0,
+          transform: showStickyCTA ? 'translateY(0)' : 'translateY(2rem)',
+          pointerEvents: showStickyCTA ? 'auto' : 'none',
+        }}
+      >
+        <button
+          onClick={() => scrollTo('pricing')}
+          className="flex items-center gap-2 px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white font-display font-semibold text-sm rounded-full shadow-lg glow-blue-sm transition-all duration-200 hover:scale-105 active:scale-95"
+        >
+          <IconBolt />
+          Start Free Trial
+        </button>
+      </div>
+
+      {/* ══ NAVIGATION ═══════════════════════════════════════ */}
+      <nav
+        className="fixed top-0 left-0 right-0 z-40 nav-blur transition-all duration-300"
+        style={{
+          backgroundColor: scrolled
+            ? isDark
+              ? 'rgba(9,9,18,0.9)'
+              : 'rgba(248,250,252,0.9)'
+            : 'transparent',
+          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.05)' : 'none',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-20">
+            {/* Logo */}
+            <button
+              onClick={() => scrollTo('hero')}
+              className="flex items-center gap-2.5 group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center glow-blue-sm transition-all group-hover:scale-110">
+                <LogoMark />
+              </div>
+              <span className="font-display font-extrabold text-lg tracking-tight" style={{ color: isDark ? '#fff' : '#0f172a' }}>
+                Polaroma
+              </span>
+            </button>
+
+            {/* Desktop nav links */}
+            <div className="hidden md:flex items-center gap-8">
+              {['features', 'how-it-works', 'pricing', 'testimonials', 'faq'].map((id) => (
+                <button
+                  key={id}
+                  onClick={() => scrollTo(id)}
+                  className="text-sm text-gray-400 hover:text-blue-400 transition-colors capitalize"
+                >
+                  {id === 'how-it-works' ? 'How it Works' : id === 'faq' ? 'FAQ' : id.charAt(0).toUpperCase() + id.slice(1)}
+                </button>
+              ))}
             </div>
 
-            {/* SECTION */}
-            <section
-                className="w-full px-4 py-20 md:py-28 flex flex-col items-center justify-center text-center"
-                style={{ background: "#EDE8DE", fontFamily: "'Inter', sans-serif" }}
-            >
-                <p
-                    className="font-medium text-[#1a1a1a] leading-[1.15] max-w-4xl"
-                    style={{ fontSize: "clamp(1.75rem, 4.5vw, 3rem)", letterSpacing: "-0.02em" }}
-                >
-                    Hey! My name is Alex Romanov,{" "}
-                    {/* Pill badge — "and I'm a photographer." */}
-                    <span
-                        className="inline-flex items-center gap-1.5 border-3 border-[#d4845a] rounded-full px-3 py-0.5 whitespace-nowrap"
-                        style={{ verticalAlign: "middle" }}
-                    >
-                        <span>photographer.</span>
-                    </span>{" "}
-                    Working with me gives you the chance to freeze the present and capture{" "}
-                    genuine emotions
-                </p>
+            {/* Desktop right */}
+            <div className="hidden md:flex items-center gap-4">
+              <button
+                onClick={() => setIsDark((d) => !d)}
+                className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
+                title={isDark ? 'Switch to Light' : 'Switch to Dark'}
+              >
+                {isDark ? <IconMoon /> : <IconSun />}
+              </button>
+              <button className="text-sm text-gray-300 hover:text-white transition-colors">
+                Sign In
+              </button>
+              <button
+                onClick={() => scrollTo('pricing')}
+                className="text-sm font-display font-semibold px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all hover:scale-105 active:scale-95"
+              >
+                Get Started
+              </button>
+            </div>
 
-                {/* CTA button */}
+            {/* Mobile controls */}
+            <div className="flex md:hidden items-center gap-3">
+              <button
+                onClick={() => setIsDark((d) => !d)}
+                className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-400 transition-colors"
+              >
+                {isDark ? <IconMoon /> : <IconSun />}
+              </button>
+              <button
+                onClick={() => setMobileOpen((o) => !o)}
+                className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-gray-300 transition-colors"
+              >
+                {mobileOpen ? <IconClose /> : <IconMenu />}
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile menu */}
+          <div className={`mobile-menu md:hidden ${mobileOpen ? 'open' : ''}`}>
+            <div className="py-4 border-t border-white/5 flex flex-col gap-1">
+              {[
+                { id: 'features', label: 'Features' },
+                { id: 'how-it-works', label: 'How it Works' },
+                { id: 'pricing', label: 'Pricing' },
+                { id: 'testimonials', label: 'Reviews' },
+                { id: 'faq', label: 'FAQ' },
+              ].map((item) => (
                 <button
-                    className="mt-10 flex items-center gap-3 bg-[#1a1a1a] text-[#EDE8DE] rounded-full px-6 py-3 text-md font-medium hover:opacity-80 transition-opacity"
+                  key={item.id}
+                  onClick={() => scrollTo(item.id)}
+                  className="px-2 py-3 text-sm text-left text-gray-300 hover:text-blue-400 transition-colors"
                 >
-                    Start exoploring now
-                    <span className="w-6 h-6 rounded-full bg-[#EDE8DE] flex items-center justify-center flex-shrink-0">
-                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="#1a1a1a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M2 7h10M8 3l4 4-4 4" />
-                        </svg>
-                    </span>
+                  {item.label}
                 </button>
-            </section>
-
-            {/* SECTION */}
-            <section
-                className="w-full px-4 md:px-8 py-12"
-                style={{ background: "#EDE8DE", fontFamily: "'Inter', sans-serif" }}
-            >
-                <div className="flex flex-col md:flex-row gap-0 items-stretch max-w-7xl mx-auto">
-
-                    {/* Left card — label */}
-                    <div
-                        className="relative flex bg-[#e0dbd1]  flex-col justify-end p-8 md:p-10 flex-shrink-0 md:w-[50%]"
-                        style={{
-                            background: "#e0dbd1",
-                            borderRadius: "40px",
-                            minHeight: "260px",
-                        }}
-                    >
-                        <div className="flex items-end justify-between gap-4">
-                            <h2
-                                className="font-semibold text-[#1a1a1a] leading-tight"
-                                style={{ fontSize: "clamp(1.4rem, 2.5vw, 1.9rem)", letterSpacing: "-0.02em" }}
-                            >
-                                Benefits of<br />working with me
-                            </h2>
-                            <span className="text-[#1a1a1a] text-2xl flex-shrink-0 mb-1">→</span>
-                        </div>
-                    </div>
-
-                    {/* Right — 2x2 grid of benefit cards */}
-                    <div className="grid grid-cols-2 gap-0 flex-1" style={{ gridTemplateRows: "1fr 1fr" }}>
-                        {benefits.map((b, i) => (
-                            <div
-                                key={i}
-                                className="relative flex gap-15 flex-col justify-between p-6 md:p-7"
-                                style={{
-                                    background: "#D95F2B",
-                                    borderRadius: "40px",
-                                    minHeight: "140px",
-                                }}
-                            >
-                                {/* 4-pointed star in the middle — only between cards, shown on the center gap */}
-                                {i === 1 && (
-                                    <div
-                                        className="hidden md:flex absolute items-center justify-center"
-                                        style={{
-                                            right: "-18px",
-                                            bottom: "-18px",
-                                            width: "36px",
-                                            height: "36px",
-                                            zIndex: 10,
-                                            color: "#EDE8DE",
-                                            fontSize: "28px",
-                                            lineHeight: 1,
-                                        }}
-                                    >
-                                        ✦
-                                    </div>
-                                )}
-                                <p
-                                    className="text-[#EDE8DE] font-medium text-base md:text-xl leading-snug"
-                                >
-                                    {b.text}
-                                </p>
-                                <div
-                                    className="w-8 h-8 rounded-full flex items-center justify-center mt-4 flex-shrink-0"
-                                    style={{ border: "1.5px solid rgba(237,232,222,0.45)", color: "#EDE8DE" }}
-                                >
-                                    {b.icon}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                </div>
-            </section>
-
-            {/* SECTION */}
-            <section
-                className="w-full max-w-7xl mx-auto px-4 md:px-8 py-30"
-                style={{ background: "#EDE8DE", fontFamily: "'Inter', sans-serif" }}
-            >
-                <div
-                    className="grid w-full"
-                    style={{
-                        gridTemplateColumns: "1.1fr 1.3fr 1.2fr",
-                        gridTemplateRows: "200px 320px",
-                    }}
+              ))}
+              <div className="pt-2 flex gap-3">
+                <button className="flex-1 text-center py-2.5 text-sm border border-white/10 rounded-lg text-gray-300 hover:border-blue-500/50 transition-colors">
+                  Sign In
+                </button>
+                <button
+                  onClick={() => scrollTo('pricing')}
+                  className="flex-1 text-center py-2.5 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-display font-semibold transition-colors"
                 >
-
-                    {/* Cell 1 — top left: dark title card */}
-                    <div
-                        className="relative flex flex-col justify-between p-6"
-                        style={{ background: "#1e1a10", borderRadius: "40px" }}
-                    >
-                        <h2
-                            className="font-black text-white leading-tight"
-                            style={{ fontSize: "clamp(1.4rem, 2.2vw, 1.9rem)", letterSpacing: "-0.02em" }}
-                        >
-                            My<br />works
-                        </h2>
-                        <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center self-end"
-                            style={{ border: "1.5px solid rgba(255,255,255,0.3)" }}
-                        >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="2" y="6" width="20" height="14" rx="3" />
-                                <circle cx="12" cy="13" r="3" />
-                                <path d="M8 6V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    {/* Cell 2 — top middle: couple on porch */}
-                    <div className="relative overflow-hidden" style={{ borderRadius: "40px" }}>
-                        <img src="https://picsum.photos/seed/couple1/500/400" alt="" className="w-full h-full object-cover" />
-                    </div>
-
-                    {/* Cell 3 — top right: blonde portrait */}
-                    <div className="relative overflow-hidden" style={{ borderRadius: "40px" }}>
-                        <img src="https://picsum.photos/seed/portrait1/480/400" alt="" className="w-full h-full object-cover" />
-                    </div>
-
-                    {/* Cell 4 — bottom left: family on couch */}
-                    <div className="relative overflow-hidden" style={{ borderRadius: "40px" }}>
-                        <img src="https://picsum.photos/seed/family1/500/560" alt="" className="w-full h-full object-cover" />
-                    </div>
-
-                    {/* Cell 5 — bottom middle: flowers/bokeh */}
-                    <div className="relative overflow-hidden" style={{ borderRadius: "40px" }}>
-                        <img src="https://picsum.photos/seed/flowers1/500/560" alt="" className="w-full h-full object-cover" />
-                    </div>
-
-                    {/* Cell 6 — bottom right: woman on chair */}
-                    <div className="relative overflow-hidden" style={{ borderRadius: "40px" }}>
-                        <img src="https://picsum.photos/seed/woman1/480/560" alt="" className="w-full h-full object-cover" />
-                    </div>
-
-                </div>
-            </section>
-
+                  Get Started
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-    )
+      </nav>
+
+      {/* ══ HERO ══════════════════════════════════════════════ */}
+      <section
+        id="hero"
+        className="relative min-h-screen flex items-center pt-20 mesh-bg overflow-hidden"
+      >
+        {/* Radial glows */}
+        <div className="absolute top-1/3 left-1/4 w-96 h-96 rounded-full bg-blue-500/10 blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/2 right-1/4 w-64 h-64 rounded-full bg-violet-500/[0.08] blur-[80px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full py-20 lg:py-0">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            {/* Left: Text */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-display font-semibold tracking-widest uppercase mb-6 reveal">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                AI-Powered Photo Studio
+              </div>
+
+              <h1 className="font-display font-extrabold text-5xl lg:text-6xl xl:text-7xl leading-[1.06] tracking-tight text-white mb-6 reveal delay-100">
+                Turning
+                <br />
+                <span className="gradient-text text-glow">Ordinary</span>
+                <br />
+                into Timeless.
+              </h1>
+
+              <p className="text-base lg:text-lg text-gray-400 leading-relaxed max-w-md mb-8 reveal delay-200">
+                Transform any photo into a masterpiece in seconds. Apply
+                cinematic film styles, artistic filters, and professional edits
+                — powered by advanced AI that understands light, mood, and
+                emotion.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3 mb-10 reveal delay-300">
+                <button
+                  onClick={() => scrollTo('pricing')}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-500 hover:bg-blue-600 text-white font-display font-semibold text-sm rounded-xl transition-all hover:scale-105 active:scale-95 glow-blue-sm"
+                >
+                  Start for Free
+                  <IconArrow />
+                </button>
+                <button
+                  onClick={() => scrollTo('how-it-works')}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 border border-white/10 text-gray-300 hover:border-blue-500/40 hover:text-blue-400 font-display font-medium text-sm rounded-xl transition-all"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Watch Demo
+                </button>
+              </div>
+
+              {/* Social proof */}
+              <div className="flex items-center gap-4 reveal delay-400">
+                <div className="flex -space-x-2">
+                  {[1, 5, 8, 12].map((n) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={n}
+                      className="w-8 h-8 rounded-full border-2 border-[#090912] object-cover"
+                      src={`https://i.pravatar.cc/40?img=${n}`}
+                      alt=""
+                    />
+                  ))}
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-0.5">
+                    <span className="text-yellow-400 text-xs">★★★★★</span>
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    <span className="text-white font-semibold">12,400+</span>{' '}
+                    photographers trust Polaroma
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Before/After comparison */}
+            <div className="relative reveal-left delay-200">
+              <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <HeroComparison />
+              </div>
+
+              {/* Floating badges */}
+              <div className="absolute -bottom-4 -left-4 px-4 py-3 bg-[#0d0d14] border border-white/10 rounded-xl shadow-xl flex items-center gap-3 reveal delay-400">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-display font-bold text-white">Cinematic Film</p>
+                  <p className="text-xs text-gray-400">Style applied in 1.2s</p>
+                </div>
+              </div>
+
+              <div className="absolute -top-4 -right-4 px-4 py-3 bg-[#0d0d14] border border-white/10 rounded-xl shadow-xl reveal delay-500">
+                <p className="text-xs text-gray-400 mb-0.5">AI Accuracy</p>
+                <p className="text-2xl font-display font-extrabold gradient-text">98.7%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#090912] to-transparent pointer-events-none" />
+      </section>
+
+      {/* ══ TRUST BAR ════════════════════════════════════════ */}
+      <section className="py-12 border-y border-white/5">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <p className="text-center text-xs text-gray-500 font-display uppercase tracking-widest mb-8 reveal">
+            Trusted by creators at
+          </p>
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-8 items-center">
+            {['ADOBE', 'VSCO', 'GETTY', 'CANVA', 'UNSPLASH', 'LIGHTROOM'].map(
+              (brand, i) => (
+                <div key={brand} className={`text-center reveal delay-${(i % 3 + 1) * 100}`}>
+                  <p className="font-display font-bold text-lg text-gray-600 hover:text-blue-400 transition-colors cursor-default">
+                    {brand}
+                  </p>
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ══ FEATURES ══════════════════════════════════════════ */}
+      <section id="features" className="py-24 lg:py-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="max-w-xl mb-16">
+            <p className="text-blue-400 text-xs font-display font-semibold uppercase tracking-widest mb-3 reveal">
+              What We Offer
+            </p>
+            <h2 className="font-display font-extrabold text-4xl lg:text-5xl text-white leading-tight mb-4 reveal delay-100">
+              Everything you need to{' '}
+              <span className="gradient-text">perfect your photos</span>
+            </h2>
+            <p className="text-gray-400 text-base leading-relaxed reveal delay-200">
+              From one-click presets to granular AI controls — Polaroma gives
+              you a complete suite of tools that would otherwise take hours to
+              achieve manually.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              {
+                delay: 'delay-100',
+                accent: 'bg-blue-500/15',
+                iconColor: 'text-blue-400',
+                border: 'border-white/[0.08] bg-white/[0.03]',
+                icon: (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1m-10 3h10M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                  </svg>
+                ),
+                title: 'AI Style Transfer',
+                desc: 'Apply iconic photography styles from Ansel Adams, Vivian Maier, and modern Instagram aesthetics with a single click.',
+              },
+              {
+                delay: 'delay-200',
+                accent: 'bg-violet-500/15',
+                iconColor: 'text-violet-400',
+                border: 'border-white/[0.08] bg-white/[0.03]',
+                icon: (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                ),
+                title: 'Smart Background Removal',
+                desc: 'Remove or replace backgrounds with pixel-perfect precision. Our AI detects hair, fur, and complex edges effortlessly.',
+              },
+              {
+                delay: 'delay-300',
+                accent: 'bg-blue-500/20',
+                iconColor: 'text-blue-400',
+                border: 'border-blue-500/20 bg-blue-500/5',
+                icon: (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m1.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                ),
+                title: 'Auto Light & Tone',
+                desc: 'Our AI reads the scene and automatically corrects exposure, white balance, shadows, and highlights like a professional colorist.',
+              },
+              {
+                delay: 'delay-100',
+                accent: 'bg-emerald-500/15',
+                iconColor: 'text-emerald-400',
+                border: 'border-white/[0.08] bg-white/[0.03]',
+                icon: (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                ),
+                title: 'AI Upscaling (4×)',
+                desc: 'Upscale photos up to 4× their original resolution without losing detail. Perfect for printing large-format canvases.',
+              },
+              {
+                delay: 'delay-200',
+                accent: 'bg-pink-500/15',
+                iconColor: 'text-pink-400',
+                border: 'border-white/[0.08] bg-white/[0.03]',
+                icon: (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                ),
+                title: 'Portrait Retouching',
+                desc: 'Skin smoothing, eye enhancement, and blemish removal that look natural — not over-processed. Portraits that feel human.',
+              },
+              {
+                delay: 'delay-300',
+                accent: 'bg-amber-500/15',
+                iconColor: 'text-amber-400',
+                border: 'border-white/[0.08] bg-white/[0.03]',
+                icon: (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                ),
+                title: 'Batch Processing',
+                desc: 'Edit 500 photos at once with consistent style settings. Save your presets and apply them across entire shoots in minutes.',
+              },
+            ].map((feature) => (
+              <div
+                key={feature.title}
+                className={`p-6 rounded-2xl border card-hover reveal ${feature.delay} ${feature.border}`}
+              >
+                <div className={`w-11 h-11 rounded-xl ${feature.accent} flex items-center justify-center mb-4`}>
+                  <span className={feature.iconColor}>{feature.icon}</span>
+                </div>
+                <h3 className="font-display font-bold text-white text-lg mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-gray-400 leading-relaxed">
+                  {feature.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══ HOW IT WORKS ══════════════════════════════════════ */}
+      <section id="how-it-works" className="py-24 lg:py-32 relative overflow-hidden">
+        <div className="absolute inset-0 mesh-bg pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
+          <div className="text-center max-w-xl mx-auto mb-16">
+            <p className="text-blue-400 text-xs font-display font-semibold uppercase tracking-widest mb-3 reveal">
+              Simple Process
+            </p>
+            <h2 className="font-display font-extrabold text-4xl lg:text-5xl text-white leading-tight mb-4 reveal delay-100">
+              From upload to{' '}
+              <span className="gradient-text">masterpiece</span> in 3 steps
+            </h2>
+            <p className="text-gray-400 text-base leading-relaxed reveal delay-200">
+              No learning curve, no complicated software. Just beautiful
+              results.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                seed: 'step1-upload',
+                caption: 'Drop your photo here',
+                num: '1',
+                title: 'Upload Your Photo',
+                desc: 'Drag and drop any JPEG, PNG, or RAW file. We support up to 50MP images.',
+                delay: 'delay-100',
+              },
+              {
+                seed: 'step2-style',
+                caption: 'Choose from 200+ styles',
+                num: '2',
+                title: 'Choose a Style',
+                desc: 'Browse 200+ AI-curated styles — film, portrait, landscape, vintage, and more.',
+                delay: 'delay-200',
+              },
+              {
+                seed: 'step3-download',
+                caption: 'Ready in under 3 seconds',
+                num: '3',
+                title: 'Download & Share',
+                desc: 'Export in full resolution. Share directly to Instagram, print, or save to your drive.',
+                delay: 'delay-300',
+              },
+            ].map((step) => (
+              <div key={step.num} className={`relative reveal ${step.delay}`}>
+                <div className="mb-6 rounded-2xl overflow-hidden border border-white/10 relative" style={{ aspectRatio: '16/9' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://picsum.photos/seed/${step.seed}/600/340`}
+                    alt={step.title}
+                    className="w-full h-full object-cover opacity-70"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                    <p className="text-white font-display font-semibold text-sm">
+                      {step.caption}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <span className="w-8 h-8 rounded-full bg-blue-500 text-white font-display font-bold text-sm flex items-center justify-center flex-shrink-0 mt-0.5">
+                    {step.num}
+                  </span>
+                  <div>
+                    <h3 className="font-display font-bold text-white text-lg mb-1">
+                      {step.title}
+                    </h3>
+                    <p className="text-sm text-gray-400 leading-relaxed">{step.desc}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══ ALTERNATING FEATURE DETAILS ══════════════════════ */}
+      <section className="py-24 lg:py-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-24 lg:space-y-32">
+          {/* Detail 1 */}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div className="reveal-right">
+              <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://picsum.photos/seed/feature-detail-1/700/500"
+                  alt="AI Style Library"
+                  className="w-full object-cover"
+                  style={{ aspectRatio: '7/5' }}
+                />
+              </div>
+            </div>
+            <div className="reveal-left">
+              <div className="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-display font-semibold uppercase tracking-widest mb-4">
+                Style Library
+              </div>
+              <h2 className="font-display font-extrabold text-3xl lg:text-4xl text-white leading-tight mb-5">
+                200+ handcrafted styles by real photographers
+              </h2>
+              <p className="text-gray-400 text-base leading-relaxed mb-6">
+                Every style in our library was developed in collaboration with
+                professional photographers — not just generated by AI. Each
+                preset captures authentic light characteristics, film grain, and
+                color science.
+              </p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  'Inspired by classic film stocks: Kodak Portra, Fuji Velvia, Ilford HP5',
+                  'Real-time preview before applying — no surprises',
+                  'New styles added monthly based on community votes',
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-3 text-sm text-gray-300">
+                    <IconCheck />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <button
+                onClick={() => scrollTo('pricing')}
+                className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-display font-semibold text-sm transition-colors"
+              >
+                Explore All Styles <IconArrow />
+              </button>
+            </div>
+          </div>
+
+          {/* Detail 2 */}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div className="order-2 lg:order-1 reveal-right">
+              <div className="inline-block px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400 text-xs font-display font-semibold uppercase tracking-widest mb-4">
+                Batch Editing
+              </div>
+              <h2 className="font-display font-extrabold text-3xl lg:text-4xl text-white leading-tight mb-5">
+                Edit your entire shoot in one go
+              </h2>
+              <p className="text-gray-400 text-base leading-relaxed mb-6">
+                Upload up to 500 photos at once. Apply consistent edits across
+                all of them, or let Polaroma's AI automatically detect the best
+                individual corrections for each shot.
+              </p>
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                  <p className="font-display font-extrabold text-2xl text-white mb-1">500</p>
+                  <p className="text-xs text-gray-400">Max photos per batch</p>
+                </div>
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
+                  <p className="font-display font-extrabold text-2xl text-white mb-1">3 min</p>
+                  <p className="text-xs text-gray-400">Avg time for 100 photos</p>
+                </div>
+              </div>
+              <button
+                onClick={() => scrollTo('pricing')}
+                className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-display font-semibold text-sm transition-colors"
+              >
+                Try Batch Mode Free <IconArrow />
+              </button>
+            </div>
+            <div className="order-1 lg:order-2 reveal-left">
+              <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://picsum.photos/seed/feature-detail-2/700/500"
+                  alt="Batch editing"
+                  className="w-full object-cover"
+                  style={{ aspectRatio: '7/5' }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ STATS COUNTER ════════════════════════════════════ */}
+      <section
+        id="stats"
+        ref={statsRef}
+        className="py-20 border-y border-white/5 bg-blue-500/5"
+      >
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {STATS.map((stat, i) => (
+              <StatCounter key={stat.label} {...stat} triggered={statTriggered} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══ TESTIMONIALS ════════════════════════════════════ */}
+      <section id="testimonials" className="py-24 lg:py-32">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <p className="text-blue-400 text-xs font-display font-semibold uppercase tracking-widest mb-3 reveal">
+              Real Reviews
+            </p>
+            <h2 className="font-display font-extrabold text-4xl lg:text-5xl text-white leading-tight reveal delay-100">
+              Loved by <span className="gradient-text">12,000+ creators</span>
+            </h2>
+          </div>
+
+          {/* Slider */}
+          <div className="relative overflow-hidden reveal delay-200">
+            <div
+              className="testimonial-track"
+              style={{ transform: `translateX(-${testimonialIndex * 100}%)` }}
+            >
+              {TESTIMONIAL_SLIDES.map((slide, slideIdx) => (
+                <div
+                  key={slideIdx}
+                  className="w-full flex-shrink-0 grid md:grid-cols-3 gap-5 px-1"
+                >
+                  {slide.map((item, itemIdx) => (
+                    <TestimonialCard
+                      key={item.name}
+                      item={item}
+                      featured={slideIdx === 0 && itemIdx === 1}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Dots */}
+            <div className="flex justify-center gap-2 mt-8">
+              {TESTIMONIAL_SLIDES.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setTestimonialIndex(i)}
+                  className="h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: testimonialIndex === i ? '1.5rem' : '0.5rem',
+                    backgroundColor:
+                      testimonialIndex === i
+                        ? '#3b82f6'
+                        : 'rgba(255,255,255,0.2)',
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Arrows */}
+            <button
+              onClick={() =>
+                setTestimonialIndex(
+                  (i) => (i - 1 + TESTIMONIAL_SLIDES.length) % TESTIMONIAL_SLIDES.length,
+                )
+              }
+              className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-2 w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-blue-400 hover:border-blue-500/40 transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={() =>
+                setTestimonialIndex((i) => (i + 1) % TESTIMONIAL_SLIDES.length)
+              }
+              className="absolute right-0 top-[45%] -translate-y-1/2 translate-x-2 w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-blue-400 hover:border-blue-500/40 transition-all"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ PRICING ══════════════════════════════════════════ */}
+      <section id="pricing" className="py-24 lg:py-32 relative overflow-hidden">
+        <div className="absolute inset-0 mesh-bg pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
+          <div className="text-center mb-12">
+            <p className="text-blue-400 text-xs font-display font-semibold uppercase tracking-widest mb-3 reveal">
+              Simple Pricing
+            </p>
+            <h2 className="font-display font-extrabold text-4xl lg:text-5xl text-white leading-tight mb-4 reveal delay-100">
+              Start free.{' '}
+              <span className="gradient-text">Scale as you grow.</span>
+            </h2>
+            <p className="text-gray-400 text-base reveal delay-200">
+              No contracts. Cancel anytime.
+            </p>
+
+            {/* Billing toggle */}
+            <div className="inline-flex items-center gap-1 mt-6 p-1 rounded-full bg-white/5 border border-white/10 reveal delay-300">
+              <button
+                onClick={() => setAnnual(false)}
+                className="px-4 py-1.5 rounded-full text-sm font-display font-semibold transition-all"
+                style={{
+                  backgroundColor: !annual ? '#3b82f6' : 'transparent',
+                  color: !annual ? '#fff' : '#9ca3af',
+                }}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setAnnual(true)}
+                className="px-4 py-1.5 rounded-full text-sm font-display font-semibold transition-all flex items-center gap-1.5"
+                style={{
+                  backgroundColor: annual ? '#3b82f6' : 'transparent',
+                  color: annual ? '#fff' : '#9ca3af',
+                }}
+              >
+                Annual
+                <span className="text-xs bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
+                  −20%
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {PRICING_PLANS.map((plan, i) => (
+              <div
+                key={plan.name}
+                className={`p-6 lg:p-8 rounded-2xl card-hover reveal delay-${(i + 1) * 100} relative ${
+                  plan.popular
+                    ? 'popular-card bg-gradient-to-b from-blue-500/10 to-blue-500/5 border border-blue-500/30'
+                    : 'border border-white/10 bg-white/[0.03]'
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-500 text-white text-xs font-display font-bold rounded-full">
+                    Most Popular
+                  </div>
+                )}
+                <p className={`font-display font-semibold text-sm mb-2 ${plan.popular ? 'text-blue-400' : 'text-gray-400'}`}>
+                  {plan.name}
+                </p>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <p className="font-display font-extrabold text-4xl text-white">
+                    ${annual ? plan.price.annual : plan.price.monthly}
+                  </p>
+                  {plan.price.annual > 0 && (
+                    <p className="text-sm text-gray-400">/month</p>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mb-6">{plan.description}</p>
+                <button
+                  className={`w-full text-center py-2.5 rounded-xl text-sm font-display font-semibold transition-all mb-6 ${
+                    plan.popular
+                      ? 'bg-blue-500 hover:bg-blue-600 text-white glow-blue-sm hover:scale-105 active:scale-95'
+                      : 'border border-white/15 text-gray-300 hover:border-blue-500/50 hover:text-blue-400'
+                  }`}
+                >
+                  {plan.cta}
+                </button>
+                <ul className="space-y-3">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+                      <IconCheck />
+                      {f}
+                    </li>
+                  ))}
+                  {plan.missing?.map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-gray-400 opacity-40">
+                      <IconX />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 text-center reveal delay-400">
+            <p className="text-sm text-gray-400">
+              Need a custom plan for your agency or enterprise?{' '}
+              <a
+                href="mailto:hello@polaroma.com"
+                className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+              >
+                Contact us →
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ FAQ ══════════════════════════════════════════════ */}
+      <section id="faq" className="py-24 lg:py-32">
+        <div className="max-w-3xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <p className="text-blue-400 text-xs font-display font-semibold uppercase tracking-widest mb-3 reveal">
+              FAQ
+            </p>
+            <h2 className="font-display font-extrabold text-4xl lg:text-5xl text-white leading-tight reveal delay-100">
+              Questions <span className="gradient-text">answered</span>
+            </h2>
+          </div>
+          <FaqAccordion items={FAQ_ITEMS} />
+        </div>
+      </section>
+
+      {/* ══ NEWSLETTER ═══════════════════════════════════════ */}
+      <section id="newsletter" className="py-20">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="rounded-2xl border border-blue-500/25 bg-gradient-to-br from-blue-500/10 to-violet-500/5 p-8 lg:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 reveal">
+            <div className="max-w-lg">
+              <h2 className="font-display font-extrabold text-3xl lg:text-4xl text-white mb-3">
+                Style tips, new presets & early access
+              </h2>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Join 8,000+ photographers receiving monthly style guides,
+                Polaroma tips, and first access to new AI features. No spam.
+                Unsubscribe anytime.
+              </p>
+            </div>
+            <div className="w-full lg:w-auto lg:min-w-[380px]">
+              {!subscribed ? (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSubscribe()}
+                    placeholder="your@email.com"
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-blue-500/60 focus:bg-blue-500/5 transition-all"
+                  />
+                  <button
+                    onClick={handleSubscribe}
+                    className="px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white font-display font-semibold text-sm rounded-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
+                  >
+                    Subscribe Free
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-emerald-400 font-display font-semibold text-sm">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                  </svg>
+                  You&apos;re subscribed! Welcome to Polaroma.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ FOOTER ═══════════════════════════════════════════ */}
+      <footer className="py-8 border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-blue-500 flex items-center justify-center">
+                <LogoMark />
+              </div>
+              <span className="font-display font-semibold text-sm text-white">Polaroma</span>
+              <span className="text-xs text-gray-500 ml-2">
+                © {new Date().getFullYear()} All rights reserved.
+              </span>
+            </div>
+
+            <div className="flex items-center gap-5">
+              {['Privacy', 'Terms', 'Blog'].map((link) => (
+                <a
+                  key={link}
+                  href="#"
+                  className="text-xs text-gray-500 hover:text-blue-400 transition-colors"
+                >
+                  {link}
+                </a>
+              ))}
+
+              {/* Social icons */}
+              {[
+                {
+                  label: 'Twitter / X',
+                  path: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z',
+                },
+                {
+                  label: 'Instagram',
+                  path: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z',
+                },
+                {
+                  label: 'GitHub',
+                  path: 'M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z',
+                },
+              ].map((social) => (
+                <a
+                  key={social.label}
+                  href="#"
+                  aria-label={social.label}
+                  className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
+                >
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d={social.path} />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
 }

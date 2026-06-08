@@ -29,6 +29,9 @@ export default function RootLayout({
     >
       <head>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"></link>
+         <style dangerouslySetInnerHTML={{ __html: `
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@300;400;500;600;700;800;900&display=swap');
+        ` }} />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

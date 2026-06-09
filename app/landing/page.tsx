@@ -1198,7 +1198,7 @@ export default function PolaromaPage() {
           </div>
 
           {/* Slider */}
-          <div className="relative overflow-hidden reveal delay-200">
+          <div className="relative overflow-hidden py-10 reveal delay-200">
             {/* Track: flex row, each slide is exactly 100% of the wrapper width */}
             <div
               style={{

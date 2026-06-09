@@ -7,6 +7,7 @@ const geistSans = Geist({
   subsets: ['latin'],
 })
 
+
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
@@ -29,6 +30,9 @@ export const metadata: Metadata = {
     description:
       'AI-powered photo studio. Style transfer, background removal, upscaling & more.',
     type: 'website',
+  },
+  icons: {
+    icon: '/logo.svg',
   },
 }
 

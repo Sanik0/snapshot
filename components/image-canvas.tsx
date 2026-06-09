@@ -955,7 +955,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                     </button>
                     <input type="range" min={10} max={maxZoom} value={zoom}
                         onChange={(e) => setZoom(Number(e.target.value))}
-                        className="w-50 accent-blue-500 cursor-pointer"
+                        className="w-50 accent-white cursor-pointer"
                     />
                     <button onClick={() => setZoom(z => Math.min(maxZoom, z + 5))}
                         className="text-white/50 hover:text-white/90 transition-colors"

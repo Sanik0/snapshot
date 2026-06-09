@@ -45,7 +45,7 @@ export default function Home() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       <main className="w-full overflow-hidden">
-        <nav className="bg-neutral-primary px-0 md:px-4 flex w-full border-b border-white/30">
+        <nav className="bg-neutral-primary px-0 md:px-4 flex w-full border-b border-white/10">
           <div className="w-full flex flex-wrap gap-5 items-center justify-between mx-auto p-4">
             <a href="/landing" className="flex items-center gap-2 rtl:space-x-reverse">
               <svg className={"h-6 w-6 fill-white"} version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"

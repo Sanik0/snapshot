@@ -51,8 +51,11 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         const container = canvasRef.current
         if (!container) return
 
-        if (splitLineRef.current) splitLineRef.current.style.visibility = "hidden"
+        // Hide zoom controls
+        const zoomControls = container.querySelector("[data-export-ignore]") as HTMLElement
+        if (zoomControls) zoomControls.style.display = "none"
 
+        if (splitLineRef.current) splitLineRef.current.style.visibility = "hidden"
         const editedSide = container.querySelector("[data-edited-side]") as HTMLElement
         if (editedSide) editedSide.style.width = "100%"
 
@@ -71,11 +74,12 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         } catch (err) {
             console.error("Export failed", err)
         } finally {
+            if (zoomControls) zoomControls.style.display = ""
             if (splitLineRef.current) splitLineRef.current.style.visibility = ""
             if (editedSide) editedSide.style.width = ""
         }
     }, [])
-
+    
     // Update the ref every render so page.tsx always calls the latest version
     useEffect(() => {
         handleExportRef.current = handleExport
@@ -666,7 +670,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     {({ zoomIn, zoomOut, resetTransform }) => (
                                         <>
                                             {/* Optional desktop controls */}
-                                            <div className="absolute top-2 right-2 z-50 flex gap-1">
+                                            <div data-export-ignore className="absolute top-2 right-2 z-50 flex gap-1">
                                                 <button onClick={() => zoomIn()} className="w-6 h-6 rounded bg-black/50 text-white/70 text-xs flex items-center justify-center hover:bg-black/70">+</button>
                                                 <button onClick={() => zoomOut()} className="w-6 h-6 rounded bg-black/50 text-white/70 text-xs flex items-center justify-center hover:bg-black/70">−</button>
                                                 <button onClick={() => resetTransform()} className="w-6 h-6 rounded bg-black/50 text-white/70 text-xs flex items-center justify-center hover:bg-black/70">↺</button>
@@ -676,166 +680,167 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                                 wrapperStyle={{ width: "100%", height: "100%" }}
                                                 contentStyle={{ width: "100%", height: "100%" }}
                                             >
-                                                {/* Original */}
-                                                <img
-                                                    src={image}
-                                                    alt="original"
-                                                    className="absolute inset-0 w-full h-full object-cover"
-                                                    style={{ opacity: 0 }}
-                                                    draggable={false}
-                                                />
+                                                <div style={{ width: "100%", height: "100%", position: "relative" }}>
+                                                    <img
+                                                        src={image}
+                                                        alt="original"
+                                                        className="absolute inset-0 w-full h-full"
+                                                        style={{
+                                                            opacity: 0,
+                                                            objectFit: "contain"  // show full image not cropped
+                                                        }}
+                                                        draggable={false}
+                                                    />
+                                                    <div
+                                                        data-edited-side
+                                                        className="absolute inset-0 pointer-events-none"
+                                                        style={{ width: "100%" }}
+                                                    >
+                                                        {/* Black base — prevents bleed from original underneath */}
+                                                        <div className="absolute inset-0 bg-black" style={{ zIndex: 0 }} />
 
-                                                {/* Edited side */}
-                                                <div
-                                                    data-edited-side
-                                                    className="absolute inset-0 overflow-hidden pointer-events-none"
-                                                    style={{ width: "100%" }}
-                                                >
-                                                    {/* Black base — prevents bleed from original underneath */}
-                                                    <div className="absolute inset-0 bg-black" style={{ zIndex: 0 }} />
+                                                        {/* Inner isolation wrapper */}
+                                                        <div className="absolute inset-0" style={{ isolation: "isolate", zIndex: 1 }}>
 
-                                                    {/* Inner isolation wrapper */}
-                                                    <div className="absolute inset-0" style={{ isolation: "isolate", zIndex: 1 }}>
+                                                            {/* Regular filtered image */}
+                                                            {!adjustments.sepiaRemap && (
+                                                                <img
+                                                                    src={image}
+                                                                    alt="edited"
+                                                                    className="absolute inset-0 h-full object-cover object-left"
+                                                                    style={{
+                                                                        width: `${canvasWidth}px`,
+                                                                        maxWidth: "none",
+                                                                        filter: liveFilter,
+                                                                        display: adjustments.fisheye > 0 ? "none" : "block",
+                                                                    }}
+                                                                    draggable={false}
+                                                                />
+                                                            )}
 
-                                                        {/* Regular filtered image */}
-                                                        {!adjustments.sepiaRemap && (
-                                                            <img
-                                                                src={image}
-                                                                alt="edited"
-                                                                className="absolute inset-0 h-full object-cover object-left"
+                                                            {/* Processed canvas — shown only when pixel processing needed */}
+                                                            {adjustments.sepiaRemap && (
+                                                                <canvas
+                                                                    ref={processedCanvasRef}
+                                                                    className="absolute inset-0 pointer-events-none"
+                                                                    style={{
+                                                                        width: `${canvasWidth}px`,
+                                                                        height: "100%",
+                                                                        maxWidth: "none",
+                                                                        objectFit: "cover",
+                                                                        objectPosition: "left",
+                                                                        display: adjustments.fisheye > 0 ? "none" : "block",
+                                                                        filter: adjustments.blur > 0 ? `blur(${(adjustments.blur / 100) * 8}px)` : "none", // 👈 add this
+                                                                    }}
+                                                                />
+                                                            )}
+
+                                                            {/* Fisheye canvas */}
+                                                            <canvas
+                                                                ref={fisheyeCanvasRef}
+                                                                className="absolute inset-0 h-full object-cover object-left pointer-events-none"
                                                                 style={{
                                                                     width: `${canvasWidth}px`,
                                                                     maxWidth: "none",
                                                                     filter: liveFilter,
-                                                                    display: adjustments.fisheye > 0 ? "none" : "block",
-                                                                }}
-                                                                draggable={false}
-                                                            />
-                                                        )}
-
-                                                        {/* Processed canvas — shown only when pixel processing needed */}
-                                                        {adjustments.sepiaRemap && (
-                                                            <canvas
-                                                                ref={processedCanvasRef}
-                                                                className="absolute inset-0 pointer-events-none"
-                                                                style={{
-                                                                    width: `${canvasWidth}px`,
-                                                                    height: "100%",
-                                                                    maxWidth: "none",
-                                                                    objectFit: "cover",
-                                                                    objectPosition: "left",
-                                                                    display: adjustments.fisheye > 0 ? "none" : "block",
-                                                                    filter: adjustments.blur > 0 ? `blur(${(adjustments.blur / 100) * 8}px)` : "none", // 👈 add this
+                                                                    display: adjustments.fisheye > 0 ? "block" : "none",
                                                                 }}
                                                             />
-                                                        )}
 
-                                                        {/* Fisheye canvas */}
-                                                        <canvas
-                                                            ref={fisheyeCanvasRef}
-                                                            className="absolute inset-0 h-full object-cover object-left pointer-events-none"
-                                                            style={{
-                                                                width: `${canvasWidth}px`,
-                                                                maxWidth: "none",
-                                                                filter: liveFilter,
-                                                                display: adjustments.fisheye > 0 ? "block" : "none",
-                                                            }}
-                                                        />
-
-                                                        {/* Grain */}
-                                                        <canvas
-                                                            ref={grainCanvasRef}
-                                                            className="absolute inset-0 pointer-events-none"
-                                                            style={{
-                                                                width: `${canvasWidth}px`,
-                                                                maxWidth: "none",
-                                                                height: "100%",
-                                                                opacity: adjustments.grain > 0 ? (adjustments.grain / 100) * 0.9 : 0,
-                                                                mixBlendMode: "soft-light",
-                                                                imageRendering: "pixelated",
-                                                                transition: "opacity 0.2s",
-                                                            }}
-                                                        />
-
-                                                        {/* Dust and scratches */}
-                                                        <canvas
-                                                            ref={dustCanvasRef}
-                                                            className="absolute inset-0 pointer-events-none"
-                                                            style={{
-                                                                width: `${canvasWidth}px`,
-                                                                maxWidth: "none",
-                                                                height: "100%",
-                                                                opacity: adjustments.dust > 0 ? (adjustments.dust / 100) * 0.8 : 0,
-                                                                mixBlendMode: "screen",
-                                                                imageRendering: "pixelated",
-                                                                transition: "opacity 0.2s",
-                                                            }}
-                                                        />
-
-                                                        {/* Date stamp */}
-                                                        {adjustments.dateStamp && (
+                                                            {/* Grain */}
                                                             <canvas
-                                                                ref={dateStampRef}
+                                                                ref={grainCanvasRef}
                                                                 className="absolute inset-0 pointer-events-none"
                                                                 style={{
                                                                     width: `${canvasWidth}px`,
                                                                     maxWidth: "none",
                                                                     height: "100%",
+                                                                    opacity: adjustments.grain > 0 ? (adjustments.grain / 100) * 0.9 : 0,
+                                                                    mixBlendMode: "soft-light",
+                                                                    imageRendering: "pixelated",
+                                                                    transition: "opacity 0.2s",
                                                                 }}
                                                             />
-                                                        )}
 
-                                                        {/* Fisheye circle vignette */}
-                                                        {adjustments.fisheye > 0 && (
-                                                            <div
-                                                                className="absolute inset-0 pointer-events-none z-10"
+                                                            {/* Dust and scratches */}
+                                                            <canvas
+                                                                ref={dustCanvasRef}
+                                                                className="absolute inset-0 pointer-events-none"
                                                                 style={{
                                                                     width: `${canvasWidth}px`,
                                                                     maxWidth: "none",
-                                                                    background: `radial-gradient(ellipse at center, transparent ${55 - adjustments.fisheye * 0.3}%, rgba(0,0,0,0.6) ${75 - adjustments.fisheye * 0.2}%, rgba(0,0,0,0.95) 100%)`,
+                                                                    height: "100%",
+                                                                    opacity: adjustments.dust > 0 ? (adjustments.dust / 100) * 0.8 : 0,
+                                                                    mixBlendMode: "screen",
+                                                                    imageRendering: "pixelated",
+                                                                    transition: "opacity 0.2s",
                                                                 }}
                                                             />
-                                                        )}
 
-                                                        {/* Light Leak */}
-                                                        {adjustments.lightLeakOpacity > 0 && (() => {
-                                                            const pos = adjustments.lightLeakPosition
-                                                            const gradientMap: Record<string, string> = {
-                                                                "top-right": `radial-gradient(ellipse at 100% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                                                "top-left": `radial-gradient(ellipse at 0% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                                                "bottom-right": `radial-gradient(ellipse at 100% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                                                "bottom-left": `radial-gradient(ellipse at 0% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
-                                                                "center-left": `radial-gradient(ellipse at 0% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
-                                                                "center-right": `radial-gradient(ellipse at 100% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
-                                                                "horizontal": `linear-gradient(to bottom, transparent 20%, ${adjustments.lightLeakColor}99 45%, ${adjustments.lightLeakColor} 50%, ${adjustments.lightLeakColor}99 55%, transparent 80%)`,
-                                                            }
-                                                            return (
-                                                                <div
-                                                                    className="absolute inset-0 pointer-events-none z-20"
+                                                            {/* Date stamp */}
+                                                            {adjustments.dateStamp && (
+                                                                <canvas
+                                                                    ref={dateStampRef}
+                                                                    className="absolute inset-0 pointer-events-none"
                                                                     style={{
                                                                         width: `${canvasWidth}px`,
                                                                         maxWidth: "none",
-                                                                        background: gradientMap[pos] ?? gradientMap["top-right"],
-                                                                        opacity: adjustments.lightLeakOpacity / 100,
-                                                                        mixBlendMode: "screen",
+                                                                        height: "100%",
                                                                     }}
                                                                 />
-                                                            )
-                                                        })()}
+                                                            )}
 
-                                                        {/* Rainbow light leak */}
-                                                        {adjustments.rainbowLeakOpacity > 0 && (() => {
-                                                            const w = adjustments.rainbowLeakWidth / 100  // 0.1 to 1.0
-                                                            const center = 50  // center point of streak
-                                                            const half = (w * 60) / 2  // half-width in percentage points
-
-                                                            return (
+                                                            {/* Fisheye circle vignette */}
+                                                            {adjustments.fisheye > 0 && (
                                                                 <div
-                                                                    className="absolute inset-0 pointer-events-none z-20"
+                                                                    className="absolute inset-0 pointer-events-none z-10"
                                                                     style={{
                                                                         width: `${canvasWidth}px`,
                                                                         maxWidth: "none",
-                                                                        background: `linear-gradient(
+                                                                        background: `radial-gradient(ellipse at center, transparent ${55 - adjustments.fisheye * 0.3}%, rgba(0,0,0,0.6) ${75 - adjustments.fisheye * 0.2}%, rgba(0,0,0,0.95) 100%)`,
+                                                                    }}
+                                                                />
+                                                            )}
+
+                                                            {/* Light Leak */}
+                                                            {adjustments.lightLeakOpacity > 0 && (() => {
+                                                                const pos = adjustments.lightLeakPosition
+                                                                const gradientMap: Record<string, string> = {
+                                                                    "top-right": `radial-gradient(ellipse at 100% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                                                    "top-left": `radial-gradient(ellipse at 0% 0%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                                                    "bottom-right": `radial-gradient(ellipse at 100% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                                                    "bottom-left": `radial-gradient(ellipse at 0% 100%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 25%, transparent 65%)`,
+                                                                    "center-left": `radial-gradient(ellipse at 0% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
+                                                                    "center-right": `radial-gradient(ellipse at 100% 50%, ${adjustments.lightLeakColor} 0%, ${adjustments.lightLeakColor}88 30%, transparent 70%)`,
+                                                                    "horizontal": `linear-gradient(to bottom, transparent 20%, ${adjustments.lightLeakColor}99 45%, ${adjustments.lightLeakColor} 50%, ${adjustments.lightLeakColor}99 55%, transparent 80%)`,
+                                                                }
+                                                                return (
+                                                                    <div
+                                                                        className="absolute inset-0 pointer-events-none z-20"
+                                                                        style={{
+                                                                            width: `${canvasWidth}px`,
+                                                                            maxWidth: "none",
+                                                                            background: gradientMap[pos] ?? gradientMap["top-right"],
+                                                                            opacity: adjustments.lightLeakOpacity / 100,
+                                                                            mixBlendMode: "screen",
+                                                                        }}
+                                                                    />
+                                                                )
+                                                            })()}
+
+                                                            {/* Rainbow light leak */}
+                                                            {adjustments.rainbowLeakOpacity > 0 && (() => {
+                                                                const w = adjustments.rainbowLeakWidth / 100  // 0.1 to 1.0
+                                                                const center = 50  // center point of streak
+                                                                const half = (w * 60) / 2  // half-width in percentage points
+
+                                                                return (
+                                                                    <div
+                                                                        className="absolute inset-0 pointer-events-none z-20"
+                                                                        style={{
+                                                                            width: `${canvasWidth}px`,
+                                                                            maxWidth: "none",
+                                                                            background: `linear-gradient(
                                                         ${adjustments.rainbowLeakAngle}deg,
                                                         transparent 0%,
                                                         transparent ${center - half}%,
@@ -849,90 +854,90 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                                         transparent ${center + half}%,
                                                         transparent 100%
                                                     )`,
-                                                                        opacity: adjustments.rainbowLeakOpacity / 100,
-                                                                        mixBlendMode: "screen",
-                                                                    }}
-                                                                />
-                                                            )
-                                                        })()}
+                                                                            opacity: adjustments.rainbowLeakOpacity / 100,
+                                                                            mixBlendMode: "screen",
+                                                                        }}
+                                                                    />
+                                                                )
+                                                            })()}
 
-                                                        {/* Camcorder overlay */}
-                                                        {(adjustments as any).camcorderEffect && (
-                                                            <div
-                                                                className="absolute inset-0 pointer-events-none z-25"
-                                                                style={{ width: `${canvasWidth}px`, maxWidth: "none" }}
-                                                            >
-                                                                {/* Black bar top */}
-                                                                <div className="absolute top-0 left-0 right-0 bg-black" style={{ height: "8%" }} />
-
-                                                                {/* Black bar bottom */}
-                                                                <div className="absolute bottom-0 left-0 right-0 bg-black" style={{ height: "4%" }} />
-
-                                                                {/* HUD text */}
+                                                            {/* Camcorder overlay */}
+                                                            {(adjustments as any).camcorderEffect && (
                                                                 <div
-                                                                    className="absolute top-0 left-0 right-0 flex items-center justify-between px-3"
-                                                                    style={{
-                                                                        height: "8%",
-                                                                        fontFamily: "'Courier New', monospace",
-                                                                        fontSize: "clamp(8px, 1.5vw, 14px)",
-                                                                        color: "#00eeff",
-                                                                        fontWeight: "bold",
-                                                                        letterSpacing: "0.05em",
-                                                                        textShadow: "0 0 6px #00eeff",
-                                                                    }}
+                                                                    className="absolute inset-0 pointer-events-none z-25"
+                                                                    style={{ width: `${canvasWidth}px`, maxWidth: "none" }}
                                                                 >
-                                                                    <span>1/15</span>
-                                                                    <span>3.3</span>
-                                                                    <span>108-0019</span>
-                                                                </div>
+                                                                    {/* Black bar top */}
+                                                                    <div className="absolute top-0 left-0 right-0 bg-black" style={{ height: "8%" }} />
 
-                                                                {/* Scanlines */}
-                                                                <div
-                                                                    className="absolute inset-0"
-                                                                    style={{
-                                                                        background: `repeating-linear-gradient(
+                                                                    {/* Black bar bottom */}
+                                                                    <div className="absolute bottom-0 left-0 right-0 bg-black" style={{ height: "4%" }} />
+
+                                                                    {/* HUD text */}
+                                                                    <div
+                                                                        className="absolute top-0 left-0 right-0 flex items-center justify-between px-3"
+                                                                        style={{
+                                                                            height: "8%",
+                                                                            fontFamily: "'Courier New', monospace",
+                                                                            fontSize: "clamp(8px, 1.5vw, 14px)",
+                                                                            color: "#00eeff",
+                                                                            fontWeight: "bold",
+                                                                            letterSpacing: "0.05em",
+                                                                            textShadow: "0 0 6px #00eeff",
+                                                                        }}
+                                                                    >
+                                                                        <span>1/15</span>
+                                                                        <span>3.3</span>
+                                                                        <span>108-0019</span>
+                                                                    </div>
+
+                                                                    {/* Scanlines */}
+                                                                    <div
+                                                                        className="absolute inset-0"
+                                                                        style={{
+                                                                            background: `repeating-linear-gradient(
                     to bottom,
                     transparent 0px,
                     transparent 2px,
                     rgba(0,0,0,0.12) 2px,
                     rgba(0,0,0,0.12) 3px
                 )`,
-                                                                    }}
-                                                                />
+                                                                        }}
+                                                                    />
 
-                                                                {/* Screen edge vignette */}
-                                                                <div
-                                                                    className="absolute inset-0"
-                                                                    style={{
-                                                                        background: "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.5) 100%)",
-                                                                    }}
-                                                                />
+                                                                    {/* Screen edge vignette */}
+                                                                    <div
+                                                                        className="absolute inset-0"
+                                                                        style={{
+                                                                            background: "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.5) 100%)",
+                                                                        }}
+                                                                    />
 
-                                                                {/* Slight green tint on midtones — the LCD glow */}
-                                                                <div
-                                                                    className="absolute inset-0"
-                                                                    style={{
-                                                                        background: "radial-gradient(ellipse at 50% 40%, rgba(0,255,100,0.06) 0%, transparent 70%)",
-                                                                        mixBlendMode: "screen",
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        )}
+                                                                    {/* Slight green tint on midtones — the LCD glow */}
+                                                                    <div
+                                                                        className="absolute inset-0"
+                                                                        style={{
+                                                                            background: "radial-gradient(ellipse at 50% 40%, rgba(0,255,100,0.06) 0%, transparent 70%)",
+                                                                            mixBlendMode: "screen",
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            )}
 
-                                                        {/* Vignette */}
-                                                        <div
-                                                            className="absolute inset-0 pointer-events-none"
-                                                            style={{
-                                                                width: `${canvasWidth}px`,
-                                                                maxWidth: "none",
-                                                                background: `radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,${(adjustments.vignette / 100) * 1.8}) 75%, rgba(0,0,0,${(adjustments.vignette / 100) * 2.2}) 100%)`,
-                                                                transition: "opacity 0.2s",
-                                                            }}
-                                                        />
+                                                            {/* Vignette */}
+                                                            <div
+                                                                className="absolute inset-0 pointer-events-none"
+                                                                style={{
+                                                                    width: `${canvasWidth}px`,
+                                                                    maxWidth: "none",
+                                                                    background: `radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(0,0,0,${(adjustments.vignette / 100) * 1.8}) 75%, rgba(0,0,0,${(adjustments.vignette / 100) * 2.2}) 100%)`,
+                                                                    transition: "opacity 0.2s",
+                                                                }}
+                                                            />
 
+                                                        </div>
                                                     </div>
                                                 </div>
-
                                             </TransformComponent>
                                         </>
                                     )}

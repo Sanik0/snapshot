@@ -38,7 +38,8 @@ export type Preset = {
 
 export function applyCanvasFilter(
   src: HTMLImageElement,
-  adj: Preset["adjustments"]
+  adj: Preset["adjustments"],
+  exportPixelRatio: number = 1
 ): HTMLCanvasElement {
   const canvas = document.createElement("canvas")
   canvas.width = src.naturalWidth
@@ -153,47 +154,81 @@ export function applyCanvasFilter(
 
   // Step 8 — CRT effect (after pixel loop, uses canvas drawing API)
   if ((adj as any).crtEffect) {
-    // Green phosphor pass — read current pixels and remap to green
     const crtData = ctx.getImageData(0, 0, w, h)
     const cd = crtData.data
+
+    // Blue/purple phosphor cast + contrast crush + highlight blow
     for (let i = 0; i < cd.length; i += 4) {
-      const brightness = (cd[i] * 0.299 + cd[i + 1] * 0.587 + cd[i + 2] * 0.114) / 255
-      cd[i] = Math.min(255, brightness * 20)
-      cd[i + 1] = Math.min(255, brightness * 255)
-      cd[i + 2] = Math.min(255, brightness * 60)
+      let r = cd[i] / 255
+      let g = cd[i + 1] / 255
+      let b = cd[i + 2] / 255
+
+      // Lift blacks (CRT can't display true black)
+      r = r * 0.82 + 0.06
+      g = g * 0.82 + 0.06
+      b = b * 0.82 + 0.06
+
+      // Blue/purple phosphor tint
+      r = r * 0.72
+      g = g * 0.82
+      b = Math.min(1, b * 1.35 + 0.08)
+
+      // Blow highlights slightly
+      if (r > 0.75) r = 0.75 + (r - 0.75) * 1.6
+      if (g > 0.75) g = 0.75 + (g - 0.75) * 1.6
+      if (b > 0.75) b = 0.75 + (b - 0.75) * 1.6
+
+      cd[i] = Math.min(255, r * 255)
+      cd[i + 1] = Math.min(255, g * 255)
+      cd[i + 2] = Math.min(255, b * 255)
     }
     ctx.putImageData(crtData, 0, 0)
 
-    // Scanlines
+    // Vertical phosphor strip gaps — the main CRT pixel structure
+    const exportPixelRatio = (adj as any).exportPixelRatio ?? 1
+    const stripW = Math.max(2, Math.round(w / 400 / exportPixelRatio))
+    const gapW = Math.max(1, Math.round(stripW / 3))
+    const period = stripW + gapW
+    const stripData = ctx.getImageData(0, 0, w, h)
+    const sd = stripData.data
     for (let y = 0; y < h; y++) {
-      if (y % 3 === 2) {
-        ctx.fillStyle = "rgba(0,0,0,0.5)"
-        ctx.fillRect(0, y, w, 1)
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4
+        if (x % period === period - 1) {
+          sd[i] = Math.round(sd[i] * 0.15)
+          sd[i + 1] = Math.round(sd[i + 1] * 0.15)
+          sd[i + 2] = Math.round(sd[i + 2] * 0.15)
+        }
+        // Subtle horizontal scanline every 4px
+        if (y % 4 === 3) {
+          sd[i] = Math.round(sd[i] * 0.7)
+          sd[i + 1] = Math.round(sd[i + 1] * 0.7)
+          sd[i + 2] = Math.round(sd[i + 2] * 0.7)
+        }
       }
     }
+    ctx.putImageData(stripData, 0, 0)
 
-    // Vertical pixel separation
-    for (let x = 0; x < w; x++) {
-      if (x % 3 === 2) {
-        ctx.fillStyle = "rgba(0,0,0,0.3)"
-        ctx.fillRect(x, 0, 1, h)
-      }
-    }
-
-    // Green glow bloom
-    const glowCanvas = document.createElement("canvas")
-    glowCanvas.width = w
-    glowCanvas.height = h
-    const glowCtx = glowCanvas.getContext("2d")!
-    glowCtx.filter = "blur(8px)"
-    glowCtx.drawImage(canvas, 0, 0)
+    // Phosphor bloom — makes strips glow into gaps
+    const bloom = document.createElement("canvas")
+    bloom.width = w
+    bloom.height = h
+    const bCtx = bloom.getContext("2d")!
+    bCtx.filter = "blur(2px)"
+    bCtx.drawImage(canvas, 0, 0)
     ctx.globalCompositeOperation = "screen"
-    ctx.globalAlpha = 0.4
-    ctx.drawImage(glowCanvas, 0, 0)
+    ctx.globalAlpha = 0.45
+    ctx.drawImage(bloom, 0, 0)
     ctx.globalAlpha = 1
     ctx.globalCompositeOperation = "source-over"
-  }
 
+    // Vignette
+    const vig = ctx.createRadialGradient(w / 2, h / 2, h * 0.25, w / 2, h / 2, h * 0.82)
+    vig.addColorStop(0, "rgba(0,0,0,0)")
+    vig.addColorStop(1, "rgba(0,0,30,0.75)")
+    ctx.fillStyle = vig
+    ctx.fillRect(0, 0, w, h)
+  }
   return canvas
 }
 
@@ -643,28 +678,28 @@ export const FILM_PRESETS: Preset[] = [
     name: "CRT",
     image: "/cameras/crt.png",
     adjustments: {
-      temperature: -20,
-      tint: -30,
-      exposure: -10,
-      contrast: 40,
-      highlight: 20,
-      shadows: -30,
-      saturation: -100,
-      grain: 20,
+      temperature: -45,
+      tint: -25,
+      exposure: 12,
+      contrast: 45,
+      highlight: 35,
+      shadows: -40,
+      saturation: 30,
+      grain: 40,
       sharpness: 0,
       blur: 0,
       fisheye: 0,
-      fade: 0,
-      hue: 0,
+      fade: 15,
+      hue: -15,
       lightLeakOpacity: 0,
-      lightLeakColor: "#00ff44",
+      lightLeakColor: "#0044ff",
       lightLeakPosition: "center-right",
       dust: 0,
       dateStamp: false,
       dateStampColor: "#ff8800",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
-      sepiaRemap: true,
+      sepiaRemap: false,
       crtEffect: true,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,

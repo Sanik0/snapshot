@@ -44,10 +44,25 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
     const [showCamera, setShowCamera] = useState(false)
     const videoRef = useRef<HTMLVideoElement>(null)
     const streamRef = useRef<MediaStream | null>(null)
+    const exportPixelRatioRef = useRef(1)
+
 
     const handleExportRef = useRef<() => void>(() => { })
 
     const handleExport = useCallback(async () => {
+
+        const img = imageElementRef.current
+        if (img && processedCanvasRef.current && adjustments.crtEffect) {
+            const exportAdj = { ...adjustments, exportPixelRatio: 4 }
+            const result = applyCanvasFilter(img, exportAdj)
+            const ctx = processedCanvasRef.current.getContext("2d")
+            if (ctx) {
+                processedCanvasRef.current.width = result.width
+                processedCanvasRef.current.height = result.height
+                ctx.drawImage(result, 0, 0)
+            }
+            await new Promise(r => setTimeout(r, 150))
+        }
         const container = canvasRef.current
         if (!container) return
 
@@ -74,7 +89,16 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             if (splitLineRef.current) splitLineRef.current.style.visibility = ""
             if (editedSide) editedSide.style.width = ""
         }
-    }, [])
+        if (img && processedCanvasRef.current && adjustments.crtEffect) {
+            const result = applyCanvasFilter(img, adjustments)
+            const ctx = processedCanvasRef.current.getContext("2d")
+            if (ctx) {
+                processedCanvasRef.current.width = result.width
+                processedCanvasRef.current.height = result.height
+                ctx.drawImage(result, 0, 0)
+            }
+        }
+    }, [adjustments])
 
     // Update the ref every render so page.tsx always calls the latest version
     useEffect(() => {
@@ -433,7 +457,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         if (!image) return
         const img = imageElementRef.current
         if (!img || !processedCanvasRef.current) return
-        if (!adjustments.sepiaRemap) return
+        if (!adjustments.sepiaRemap && !adjustments.crtEffect) return
 
         const run = () => {
             if (!processedCanvasRef.current) return
@@ -694,7 +718,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     )}
 
                                     {/* Processed canvas — shown only when pixel processing needed */}
-                                    {adjustments.sepiaRemap && (
+                                    {(adjustments.sepiaRemap || adjustments.crtEffect) && (
                                         <canvas
                                             ref={processedCanvasRef}
                                             className="absolute inset-0 pointer-events-none"

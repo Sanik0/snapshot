@@ -228,6 +228,40 @@ export function applyCanvasFilter(
     vig.addColorStop(1, "rgba(0,0,30,0.75)")
     ctx.fillStyle = vig
     ctx.fillRect(0, 0, w, h)
+
+
+    // ── VHS text overlay — goes here, AFTER vignette ──
+    const now = new Date()
+    const hh = String(now.getHours()).padStart(2, "0")
+    const mm = String(now.getMinutes()).padStart(2, "0")
+    const ss = String(now.getSeconds()).padStart(2, "0")
+    const day = now.getDate()
+    const month = String(now.getMonth() + 1).padStart(2, "0")
+    const year = now.getFullYear()
+    const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+    const dayName = days[now.getDay()]
+
+    const fontSize = Math.round(w * 0.028)
+    ctx.font = `bold ${fontSize}px "Courier New", monospace`
+
+    const drawVHSText = (text: string, x: number, y: number) => {
+      ctx.fillStyle = "rgba(255,0,0,0.7)"
+      ctx.fillText(text, x - 2, y)
+      ctx.fillStyle = "rgba(0,0,255,0.7)"
+      ctx.fillText(text, x + 2, y)
+      ctx.fillStyle = "rgba(255,255,255,0.92)"
+      ctx.fillText(text, x, y)
+    }
+
+    const pad = Math.round(w * 0.08)
+    const lineH = Math.round(fontSize * 1.4)
+
+    drawVHSText("CAMERA1", pad, pad + lineH)
+    drawVHSText("PLAY", pad, pad + lineH * 2)
+    drawVHSText(`${hh}:${mm}:${ss}`, pad, pad + lineH * 3)
+    drawVHSText(`${hh}:${mm}`, pad, h - pad - lineH)
+    drawVHSText(`${day}.${month}.${year} ${dayName}`, pad, h - pad)
+
   }
   return canvas
 }

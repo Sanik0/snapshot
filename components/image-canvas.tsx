@@ -457,7 +457,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         if (!image) return
         const img = imageElementRef.current
         if (!img || !processedCanvasRef.current) return
-       if (!adjustments.sepiaRemap && !adjustments.crtEffect && !(adjustments as any).nightVisionEffect) return
+        if (!adjustments.sepiaRemap && !adjustments.crtEffect && !(adjustments as any).nightVisionEffect) return
 
         const run = () => {
             if (!processedCanvasRef.current) return
@@ -490,18 +490,28 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         carouselRef.current.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" })
     }
 
-    const openCamera = async () => {
+    const [facingMode, setFacingMode] = useState<"environment" | "user">("environment")
+    const [cameraZoom, setCameraZoom] = useState(1)
+    const pinchStartDistRef = useRef<number>(0)
+    const pinchStartZoomRef = useRef<number>(1)
+
+    const openCamera = async (facing: "environment" | "user" = "environment") => {
         try {
+            streamRef.current?.getTracks().forEach(t => t.stop())
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment" }
+                video: {
+                    facingMode: facing,
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                }
             })
             streamRef.current = stream
+            setFacingMode(facing)
             setShowCamera(true)
             setTimeout(() => {
                 if (videoRef.current) videoRef.current.srcObject = stream
             }, 100)
         } catch {
-            // Camera not available — fall back to file picker
             const input = document.createElement("input")
             input.type = "file"
             input.accept = "image/*"
@@ -511,6 +521,11 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
             }
             input.click()
         }
+    }
+
+    const flipCamera = () => {
+        const next = facingMode === "environment" ? "user" : "environment"
+        openCamera(next)
     }
 
     const capturePhoto = () => {
@@ -645,7 +660,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                             </button>
 
                             <button
-                                onClick={openCamera}
+                                onClick={() => openCamera("environment")}
                                 className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-xs font-medium text-white/60 hover:text-white/90"
                             >
                                 <span className="material-icons" style={{ fontSize: "1rem" }}>camera_alt</span>
@@ -1070,24 +1085,73 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                     </div>
 
                     {/* Video feed */}
-                    <div className="flex-1 relative overflow-hidden">
+                    <div
+                        className="flex-1 relative overflow-hidden"
+                        onTouchStart={(e) => {
+                            if (e.touches.length === 2) {
+                                const dx = e.touches[0].clientX - e.touches[1].clientX
+                                const dy = e.touches[0].clientY - e.touches[1].clientY
+                                pinchStartDistRef.current = Math.sqrt(dx * dx + dy * dy)
+                                pinchStartZoomRef.current = zoom
+                            }
+                        }}
+                        onTouchMove={(e) => {
+                            if (e.touches.length === 2) {
+                                const dx = e.touches[0].clientX - e.touches[1].clientX
+                                const dy = e.touches[0].clientY - e.touches[1].clientY
+                                const dist = Math.sqrt(dx * dx + dy * dy)
+                                const scale = dist / pinchStartDistRef.current
+                                const newZoom = Math.min(5, Math.max(1, pinchStartZoomRef.current * scale))
+                                setZoom(newZoom)
+
+                                // Apply zoom to video track if supported
+                                const track = streamRef.current?.getVideoTracks()[0]
+                                const caps = track?.getCapabilities?.() as any
+                                if (track && caps?.zoom) {
+                                    track.applyConstraints({ advanced: [{ zoom: newZoom }] } as any)
+                                } else if (videoRef.current) {
+                                    // CSS fallback zoom
+                                    videoRef.current.style.transform = `scale(${newZoom})`
+                                }
+                            }
+                        }}
+                    >
                         <video
                             ref={videoRef}
                             autoPlay
                             playsInline
                             muted
-                            className="absolute inset-0 w-full h-full object-cover"
+                            className="absolute inset-0 w-full h-full object-cover transition-transform"
                         />
+
+                        {/* Zoom indicator */}
+                        {zoom > 1 && (
+                            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full">
+                                <span className="text-white text-xs font-mono">{zoom.toFixed(1)}x</span>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Capture button */}
-                    <div className="flex items-center justify-center py-8 bg-black/80">
+                    {/* Controls */}
+                    <div className="flex items-center justify-between px-10 py-8 bg-black/80">
+                        {/* Flip camera */}
+                        <button
+                            onClick={flipCamera}
+                            className="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                        >
+                            <span className="material-icons text-xl">flip_camera_ios</span>
+                        </button>
+
+                        {/* Capture */}
                         <button
                             onClick={capturePhoto}
                             className="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center transition-transform active:scale-95"
                         >
                             <div className="w-12 h-12 rounded-full bg-white" />
                         </button>
+
+                        {/* Placeholder for symmetry */}
+                        <div className="w-10" />
                     </div>
                 </div>
             )}

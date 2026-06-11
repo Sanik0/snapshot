@@ -70,7 +70,7 @@ export default function Home() {
             </a>
             <div className="flex gap-3 items-center">
               {/* Tune button with tooltip */}
-              <button onClick={() => exportFnRef.current?.()} type="button" className="text-black block md:hidden w-fit bg-blue-600 hover:bg-blue-700 box-border border border-transparent shadow-xs font-medium cursor-pointer leading-5 rounded-md text-sm px-3 py-2 focus:outline-none">Save</button>
+              <button onClick={() => exportFnRef.current?.()} type="button" className="text-black block md:hidden w-fit bg-blue-600 hover:bg-blue-700 box-border border border-transparent shadow-xs font-medium cursor-pointer leading-5 rounded-md text-sm px-3 py-1.5 focus:outline-none">Save</button>
               <div className="relative md:hidden">
                 <button
                   type="button"

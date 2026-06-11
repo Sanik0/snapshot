@@ -382,8 +382,8 @@ const TestimonialCard: FC<{ item: TestimonialItem; featured?: boolean }> = ({
 }) => (
     <div
         className={`p-6 rounded-2xl border card-hover ${featured
-                ? 'border-blue-500/20 bg-blue-500/5'
-                : 'border-white/[0.08] bg-white/[0.03]'
+            ? 'border-blue-500/20 bg-blue-500/5'
+            : 'border-white/[0.08] bg-white/[0.03]'
             }`}
     >
         <div className="flex gap-1 mb-3">
@@ -408,7 +408,7 @@ const TestimonialCard: FC<{ item: TestimonialItem; featured?: boolean }> = ({
 // ── HeroComparison ────────────────────────────────────────────
 const HeroComparison: FC = () => {
     const containerRef = useRef<HTMLDivElement>(null)
-    const clipRef = useRef<HTMLDivElement>(null)
+    const clipRef = useRef<HTMLImageElement>(null)
     const dividerRef = useRef<HTMLDivElement>(null)
     const draggingRef = useRef(false)
     const pctRef = useRef(50)
@@ -423,7 +423,7 @@ const HeroComparison: FC = () => {
         const rect = container.getBoundingClientRect()
         const pct = Math.min(Math.max(((clientX - rect.left) / rect.width) * 100, 5), 95)
         pctRef.current = pct
-        clip.style.width = pct + '%'
+        clip.style.clipPath = `inset(0 ${100 - pct}% 0 0)`  // ← reveal from left
         divider.style.left = pct + '%'
     }, [])
 
@@ -447,7 +447,7 @@ const HeroComparison: FC = () => {
             if (!draggingRef.current) {
                 pctRef.current += dirRef.current * 0.15
                 if (pctRef.current < 30 || pctRef.current > 70) dirRef.current *= -1
-                if (clipRef.current) clipRef.current.style.width = pctRef.current + '%'
+                if (clipRef.current) clipRef.current.style.clipPath = `inset(0 ${100 - pctRef.current}% 0 0)`
                 if (dividerRef.current) dividerRef.current.style.left = pctRef.current + '%'
             }
             animRef.current = requestAnimationFrame(autoAnim)
@@ -480,50 +480,38 @@ const HeroComparison: FC = () => {
             {/* After image (full width, behind) */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-                src="https://picsum.photos/seed/polaroma-after/800/600"
+                src="/landing_images/hero_enhanced.png"
                 alt="After: AI Enhanced"
                 className="absolute inset-0 w-full h-full object-cover"
-                style={{ filter: 'saturate(1.4) contrast(1.1) brightness(0.95)' }}
                 draggable={false}
             />
             {/* Before image (clipped) */}
             <div
                 ref={clipRef}
                 className="absolute inset-0 overflow-hidden"
-                style={{ width: '50%' }}
+                style={{ width: '100%' }}
             >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                    src="https://picsum.photos/seed/polaroma-after/800/600"
+                    src="/landing_images/hero_original.png"
                     alt="Before: Original"
-                    className="absolute inset-0 h-full object-cover"
-                    style={{
-                        width: '800px',
-                        maxWidth: 'none',
-                        filter: 'saturate(0.6) brightness(1.05)',
-                    }}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    ref={clipRef}
                     draggable={false}
                 />
             </div>
             {/* Divider */}
             <div
                 ref={dividerRef}
-                className="absolute inset-y-0 flex items-center"
-                style={{ left: '50%', transform: 'translateX(-50%)' }}
+                className="absolute inset-y-0 flex items-center justify-center"
+                style={{ left: '50%', transform: 'translateX(-50%)', width: '2px' }}
             >
                 <div className="w-0.5 h-full bg-white/80" />
-                <div className="absolute w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center z-10 cursor-ew-resize">
+                <div className="absolute w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center cursor-ew-resize">
                     <svg className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l-4 4 4 4M16 9l4 4-4 4" />
                     </svg>
                 </div>
-            </div>
-            {/* Labels */}
-            <div className="absolute top-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-xs text-white font-display font-bold pointer-events-none">
-                BEFORE
-            </div>
-            <div className="absolute top-3 right-3 px-2 py-1 bg-blue-500/80 backdrop-blur-sm rounded text-xs text-white font-display font-bold pointer-events-none">
-                AFTER
             </div>
         </div>
     )
@@ -1315,8 +1303,8 @@ export default function PolaromaPage() {
                             <div
                                 key={plan.name}
                                 className={`p-6 lg:p-8 rounded-2xl card-hover reveal delay-${(i + 1) * 100} relative ${plan.popular
-                                        ? 'popular-card bg-gradient-to-b from-blue-500/10 to-blue-500/5 border border-blue-500/30'
-                                        : 'border border-white/10 bg-white/[0.03]'
+                                    ? 'popular-card bg-gradient-to-b from-blue-500/10 to-blue-500/5 border border-blue-500/30'
+                                    : 'border border-white/10 bg-white/[0.03]'
                                     }`}
                             >
                                 {plan.popular && (
@@ -1338,8 +1326,8 @@ export default function PolaromaPage() {
                                 <p className="text-xs text-gray-500 mb-6">{plan.description}</p>
                                 <button
                                     className={`w-full text-center py-2.5 rounded-xl text-sm font-display font-semibold transition-all mb-6 ${plan.popular
-                                            ? 'bg-blue-500 hover:bg-blue-600 text-white glow-blue-sm hover:scale-105 active:scale-95'
-                                            : 'border border-white/15 text-gray-300 hover:border-blue-500/50 hover:text-blue-400'
+                                        ? 'bg-blue-500 hover:bg-blue-600 text-white glow-blue-sm hover:scale-105 active:scale-95'
+                                        : 'border border-white/15 text-gray-300 hover:border-blue-500/50 hover:text-blue-400'
                                         }`}
                                 >
                                     {plan.cta}

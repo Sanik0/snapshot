@@ -481,7 +481,7 @@ export const FILM_PRESETS: Preset[] = [
       grain: 40,
       sharpness: 0,
       blur: 3,
-      fisheye: 45,
+      fisheye: 70,
       fade: 18,
       hue: 5,
       lightLeakOpacity: 10,

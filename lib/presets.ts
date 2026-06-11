@@ -2,6 +2,7 @@ export type Preset = {
   id: string
   name: string
   image: string
+  defaultFrame?: string | null
   adjustments: {
     temperature: number
     tint: number
@@ -298,6 +299,7 @@ export const FILM_PRESETS: Preset[] = [
     id: "polaroid",
     name: "Polar",
     image: "/cameras/polaroid.png",
+    defaultFrame: "/frames/frame9.png",
     adjustments: {
       temperature: 25,
       tint: 8,
@@ -329,6 +331,42 @@ export const FILM_PRESETS: Preset[] = [
       cctvRemap: false,
     },
     filter: "brightness(1.15) contrast(0.85) saturate(0.8) sepia(0.25) hue-rotate(5deg)",
+  },
+  {
+    id: "VHS",
+    name: "VHS",
+    image: "/cameras/VHS.png",
+    adjustments: {
+      temperature: -45,
+      tint: -25,
+      exposure: 12,
+      contrast: 45,
+      highlight: 35,
+      shadows: -40,
+      saturation: 30,
+      grain: 40,
+      sharpness: 0,
+      blur: 0,
+      fisheye: 0,
+      fade: 15,
+      hue: -15,
+      lightLeakOpacity: 0,
+      lightLeakColor: "#0044ff",
+      lightLeakPosition: "center-right",
+      dust: 0,
+      dateStamp: false,
+      dateStampColor: "#ff8800",
+      shadowTintColor: "#000000",
+      highlightTintColor: "#000000",
+      sepiaRemap: false,
+      crtEffect: true,
+      rainbowLeakOpacity: 0,
+      rainbowLeakAngle: 135,
+      rainbowLeakWidth: 40,
+      camcorderEffect: false,
+      cctvRemap: false,
+    },
+    filter: "none",
   },
   {
     id: "fuji-400h",

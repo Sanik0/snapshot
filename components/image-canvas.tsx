@@ -476,6 +476,15 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         }
     }, [adjustments, image])
 
+    useEffect(() => {
+        if (!image) return
+        if (activePreset.id === "polaroid") {
+            onFrameChange(activePreset.defaultFrame ?? null)
+        } else {
+            onFrameChange(null)
+        }
+    }, [image])
+
     const scrollCarousel = (dir: "left" | "right") => {
         if (!carouselRef.current) return
         carouselRef.current.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" })
@@ -1028,8 +1037,14 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                     {FILM_PRESETS.map((preset) => (
                         <button
                             key={preset.id}
-                            onClick={() => onPresetChange(preset)}
-                            className={`flex flex-col items-center gap-2 shrink-0 group transition-all ${activePreset.id === preset.id ? "opacity-100" : "opacity-50 hover:opacity-80"}`}
+                            onClick={() => {
+                                onPresetChange(preset)
+                                if (preset.id === "polaroid") {
+                                    onFrameChange(preset.defaultFrame ?? null)
+                                } else {
+                                    onFrameChange(null)
+                                }
+                            }}
                         >
                             <div className={`w-16 h-16 rounded-lg border overflow-hidden transition-all ${activePreset.id === preset.id ? "border-white/40" : "border-white/10 group-hover:border-white/20"}`}>
                                 <img src={preset.image} alt={preset.name} className="w-full h-full object-cover" />

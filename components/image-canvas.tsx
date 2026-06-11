@@ -457,7 +457,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         if (!image) return
         const img = imageElementRef.current
         if (!img || !processedCanvasRef.current) return
-        if (!adjustments.sepiaRemap && !adjustments.crtEffect) return
+       if (!adjustments.sepiaRemap && !adjustments.crtEffect && !(adjustments as any).nightVisionEffect) return
 
         const run = () => {
             if (!processedCanvasRef.current) return
@@ -727,7 +727,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     )}
 
                                     {/* Processed canvas — shown only when pixel processing needed */}
-                                    {(adjustments.sepiaRemap || adjustments.crtEffect) && (
+                                    {(adjustments.sepiaRemap || adjustments.crtEffect || (adjustments as any).nightVisionEffect) && (
                                         <canvas
                                             ref={processedCanvasRef}
                                             className="absolute inset-0 pointer-events-none"

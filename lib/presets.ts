@@ -33,6 +33,7 @@ export type Preset = {
     rainbowLeakWidth: number
     camcorderEffect: boolean
     cctvRemap: boolean
+    nightVisionEffect: boolean
   }
   filter: string
 }
@@ -264,6 +265,96 @@ export function applyCanvasFilter(
     drawVHSText(`${day}.${month}.${year} ${dayName}`, pad, h - pad)
 
   }
+
+  if ((adj as any).nightVisionEffect) {
+    const TARGET_W = 800
+    const scale = TARGET_W / w
+    const nw = TARGET_W
+    const nh = Math.round(h * scale)
+
+    const normCanvas = document.createElement("canvas")
+    normCanvas.width = nw
+    normCanvas.height = nh
+    const normCtx = normCanvas.getContext("2d", { willReadFrequently: true })!
+    normCtx.drawImage(canvas, 0, 0, nw, nh)
+
+    // ── Single pass — luminance to green phosphor + lifted blacks + noise ──
+    const nvData = normCtx.getImageData(0, 0, nw, nh)
+    const d = nvData.data
+
+    for (let i = 0; i < d.length; i += 4) {
+      // Luminance
+      const lum = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / 255
+
+      // Lift blacks — NV can't see true black
+      const lifted = lum * 0.85 + 0.08
+
+      // Blown highlights — bright areas bleed
+      const blown = lifted > 0.75 ? 0.75 + (lifted - 0.75) * 2.5 : lifted
+
+      // Green phosphor remap
+      const noise = (Math.random() - 0.5) * 0.08
+      d[i] = Math.min(255, (blown * 0.15 + noise) * 255)        // very low red
+      d[i + 1] = Math.min(255, (blown * 1.0 + noise * 0.5) * 255)  // full green
+      d[i + 2] = Math.min(255, (blown * 0.15 + noise) * 255)        // very low blue
+    }
+    normCtx.putImageData(nvData, 0, 0)
+
+    // ── Highlight bloom — lights bleed green ──
+    const bloom = document.createElement("canvas")
+    bloom.width = nw
+    bloom.height = nh
+    const bCtx = bloom.getContext("2d")!
+    bCtx.filter = "blur(8px)"
+    bCtx.drawImage(normCanvas, 0, 0)
+    normCtx.globalCompositeOperation = "screen"
+    normCtx.globalAlpha = 0.55
+    normCtx.drawImage(bloom, 0, 0)
+    normCtx.globalAlpha = 1
+    normCtx.globalCompositeOperation = "source-over"
+
+    // ── Subtle horizontal scan banding ──
+    for (let y = 0; y < nh; y += 6) {
+      normCtx.fillStyle = "rgba(0,0,0,0.12)"
+      normCtx.fillRect(0, y, nw, 1)
+    }
+
+    // ── Scale back up ──
+    ctx.clearRect(0, 0, w, h)
+    ctx.imageSmoothingEnabled = true
+    ctx.drawImage(normCanvas, 0, 0, w, h)
+
+    // ── Circular vignette — NV tube lens ──
+    const vig = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.min(w, h) * 0.65)
+    vig.addColorStop(0, "rgba(0,0,0,0)")
+    vig.addColorStop(0.7, "rgba(0,0,0,0)")
+    vig.addColorStop(1, "rgba(0,0,0,1)")
+    ctx.fillStyle = vig
+    ctx.fillRect(0, 0, w, h)
+
+    // ── Timestamp bottom-right — green NV font ──
+    const now = new Date()
+    const hh = String(now.getHours()).padStart(2, "0")
+    const mm = String(now.getMinutes()).padStart(2, "0")
+    const ss = String(now.getSeconds()).padStart(2, "0")
+    const baseDim = Math.min(w, h)
+    const fontSize = Math.max(12, Math.round(baseDim * 0.04))
+    ctx.font = `bold ${fontSize}px "Courier New", monospace`
+
+    const drawNVText = (text: string, x: number, y: number) => {
+      ctx.fillStyle = "rgba(0,180,0,0.4)"
+      ctx.fillText(text, x + 2, y + 2)
+      ctx.fillStyle = "rgba(0,255,80,0.9)"
+      ctx.fillText(text, x, y)
+    }
+
+    const pad = Math.round(w * 0.04)
+    const lineH = Math.round(fontSize * 1.4)
+
+    drawNVText(`${hh}:${mm}:${ss}`, pad, h - pad)
+    drawNVText("REC", w - pad - ctx.measureText("REC").width, h - pad)
+  }
+
   return canvas
 }
 
@@ -329,6 +420,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "brightness(1.15) contrast(0.85) saturate(0.8) sepia(0.25) hue-rotate(5deg)",
   },
@@ -365,6 +457,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "none",
   },
@@ -391,8 +484,46 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "contrast(0.95) saturate(0.9) brightness(1.1) hue-rotate(-5deg)",
+  },
+  {
+    id: "night-vision",
+    name: "NV Cam",
+    image: "/cameras/nightvision.png",
+    adjustments: {
+      temperature: 0,
+      tint: 0,
+      exposure: 15,
+      contrast: 30,
+      highlight: 20,
+      shadows: 15,
+      saturation: -100,
+      grain: 90,
+      sharpness: 0,
+      blur: 0,
+      fisheye: 0,
+      fade: 0,
+      hue: 0,
+      lightLeakOpacity: 0,
+      lightLeakColor: "#00ff00",
+      lightLeakPosition: "center-right",
+      dust: 0,
+      dateStamp: false,
+      dateStampColor: "#00ff00",
+      shadowTintColor: "#000000",
+      highlightTintColor: "#000000",
+      sepiaRemap: false,
+      crtEffect: false,
+      rainbowLeakOpacity: 0,
+      rainbowLeakAngle: 135,
+      rainbowLeakWidth: 40,
+      camcorderEffect: false,
+      cctvRemap: false,
+      nightVisionEffect: true,
+    },
+    filter: "none",
   },
   {
     id: "y2k-vivid",
@@ -427,6 +558,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "brightness(1.12) contrast(0.9) saturate(1.4) hue-rotate(5deg)",
   },
@@ -463,6 +595,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "brightness(1.05) contrast(1.25) saturate(1.2) sepia(0.15) hue-rotate(8deg)",
   },
@@ -499,6 +632,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "brightness(1.1) contrast(0.92) saturate(1.35) hue-rotate(5deg)",
   },
@@ -535,6 +669,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "brightness(1.4) contrast(0.8) saturate(0.7) sepia(0.2)",
   },
@@ -571,6 +706,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: true,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "brightness(1.08) contrast(1.2) saturate(1.35) hue-rotate(5deg)",
   },
@@ -607,6 +743,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "brightness(0.90) contrast(0.70) saturate(0.25) sepia(0.2) hue-rotate(-25deg)",
   },
@@ -643,6 +780,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "brightness(1.05) contrast(1.3) saturate(0.1) sepia(1) hue-rotate(8deg)",
   },
@@ -679,7 +817,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
-
+      nightVisionEffect: false
     },
     filter: "none",
   },
@@ -706,6 +844,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "grayscale(1) contrast(1.25) brightness(0.95)",
   },
@@ -742,42 +881,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
-    },
-    filter: "none",
-  },
-  {
-    id: "crt-phosphor",
-    name: "CRT",
-    image: "/cameras/crt.png",
-    adjustments: {
-      temperature: -45,
-      tint: -25,
-      exposure: 12,
-      contrast: 45,
-      highlight: 35,
-      shadows: -40,
-      saturation: 30,
-      grain: 40,
-      sharpness: 0,
-      blur: 0,
-      fisheye: 0,
-      fade: 15,
-      hue: -15,
-      lightLeakOpacity: 0,
-      lightLeakColor: "#0044ff",
-      lightLeakPosition: "center-right",
-      dust: 0,
-      dateStamp: false,
-      dateStampColor: "#ff8800",
-      shadowTintColor: "#000000",
-      highlightTintColor: "#000000",
-      sepiaRemap: false,
-      crtEffect: true,
-      rainbowLeakOpacity: 0,
-      rainbowLeakAngle: 135,
-      rainbowLeakWidth: 40,
-      camcorderEffect: false,
-      cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "none",
   },
@@ -814,6 +918,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "none",
   },
@@ -850,6 +955,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 25,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "brightness(1.08) contrast(1.4) saturate(1.5) hue-rotate(15deg)",
   },
@@ -886,6 +992,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "none",
   },
@@ -922,6 +1029,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 15,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "none",
   },
@@ -958,6 +1066,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 20,
       camcorderEffect: false,
       cctvRemap: false,
+      nightVisionEffect: false
     },
     filter: "brightness(0.88) contrast(1.35) saturate(1.45) hue-rotate(-8deg)",
   },
@@ -994,6 +1103,7 @@ export const FILM_PRESETS: Preset[] = [
       rainbowLeakWidth: 40,
       camcorderEffect: true,
       cctvRemap: true,
+      nightVisionEffect: false
     },
     filter: "none",
   },

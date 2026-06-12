@@ -83,60 +83,54 @@ const FAQ_ITEMS: FaqItem[] = [
     },
 ]
 
-const TESTIMONIAL_SLIDES: TestimonialItem[][] = [
+const TESTIMONIAL_SLIDES = [
     [
         {
-            stars: 5,
-            text: "Polaroma transformed my wedding photography workflow. What used to take 6 hours of editing now takes 20 minutes. My clients are blown away every time.",
-            name: 'Sarah Chen',
-            role: 'Wedding Photographer, NYC',
-            avatar: 'https://i.pravatar.cc/80?img=21',
+            name: "Alex Rivera",
+            role: "Landscape Photographer",
+            avatar: "https://picsum.photos/seed/alex/100/100",
+            content: "The mathematical color profiles are incredibly accurate. Unlike standard editors that distort highlights, these presets render clean, organic tones instantly."
         },
         {
-            stars: 5,
-            text: 'The AI style transfer is genuinely mind-blowing. I applied a Fuji Velvia film look to 300 travel photos in under 5 minutes. This used to be a week\'s work.',
-            name: 'Marcus Rivera',
-            role: 'Travel Photographer',
-            avatar: 'https://i.pravatar.cc/80?img=33',
+            name: "Sarah Jenkins",
+            role: "Editorial Lead",
+            avatar: "https://picsum.photos/seed/sarah/100/100",
+            content: "Finding an editing tool that completely avoids over-processed algorithmic guessing is a game-changer. Pure math, total control, and zero rendering lag."
         },
         {
-            stars: 5,
-            text: 'Portrait retouching that actually looks like a real human and not an AI doll. Finally. My model clients specifically request that I use Polaroma for their portfolios.',
-            name: 'Yuki Tanaka',
-            role: 'Fashion & Editorial Photographer',
-            avatar: 'https://i.pravatar.cc/80?img=47',
-        },
+            name: "Marcus Chen",
+            role: "Commercial Creator",
+            avatar: "https://picsum.photos/seed/marcus/100/100",
+            content: "The film emulation matrices are dead-on. I can apply a classic Kodak look across my entire shoot without any compression artifacts or hidden paywalls."
+        }
     ],
     [
         {
-            stars: 5,
-            text: 'I run a real estate photography business. The AI enhancement makes every property look magazine-ready. My turnaround went from 2 days to 2 hours.',
-            name: 'David Park',
-            role: 'Real Estate Photographer',
-            avatar: 'https://i.pravatar.cc/80?img=15',
+            name: "Elena Rostova",
+            role: "Portrait Photographer",
+            avatar: "https://picsum.photos/seed/elena/100/100",
+            content: "I love the manual adjustment precision. The response curve feels exactly like physical hardware controls—incredibly intuitive and predictable."
         },
         {
-            stars: 5,
-            text: 'The 4x upscaling is incredible. I restored old family photos from the 1960s and they look like they were shot yesterday. My grandmother cried seeing them.',
-            name: 'Emma Johansson',
-            role: 'Amateur Photographer, Sweden',
-            avatar: 'https://i.pravatar.cc/80?img=28',
+            name: "David Vance",
+            role: "Digital Artist",
+            avatar: "https://picsum.photos/seed/david/100/100",
+            content: "Clean code translates to a clean user interface. The real-time matrix rendering makes high-resolution workflow feel effortlessly fast."
         },
         {
-            stars: 5,
-            text: "Switched from Lightroom presets to Polaroma 6 months ago and never looked back. The AI understands context — it knows when to be subtle and when to be dramatic.",
-            name: 'Carlos Mendez',
-            role: 'Food & Product Photographer',
-            avatar: 'https://i.pravatar.cc/80?img=56',
-        },
-    ],
-]
+            name: "Amara Okafor",
+            role: "Visual Designer",
+            avatar: "https://picsum.photos/seed/amara/100/100",
+            content: "Zero cloud processing queues and zero artificial alterations. It simply handles the color science perfectly right inside the browser viewport."
+        }
+    ]
+];
 
 const STATS: StatItem[] = [
-    { count: 12400, suffix: '+', label: 'Active photographers' },
-    { count: 2800000, suffix: '+', label: 'Photos processed' },
+    { count: 12400, suffix: '+', label: 'Active Users' },
+    { count: 50000, suffix: '+', label: 'Photos processed' },
     { count: 98, suffix: '%', label: 'Customer satisfaction' },
-    { count: 200, suffix: '+', label: 'AI styles available' },
+    { count: 20, suffix: '+', label: 'AI styles available' },
 ]
 
 const PRICING_PLANS: PricingPlan[] = [
@@ -1172,14 +1166,14 @@ export default function PolaromaPage() {
             {/* ══ ALTERNATING FEATURE DETAILS ══════════════════════ */}
             <section className="py-24 lg:py-32">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8 space-y-24 lg:space-y-32">
-                    {/* Detail 1 */}
+                    {/* Detail 1 - Preset Library */}
                     <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
                         <div className="reveal-right">
                             <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src="https://picsum.photos/seed/feature-detail-1/700/500"
-                                    alt="AI Style Library"
+                                    alt="Custom Preset Library"
                                     className="w-full object-cover"
                                     style={{ aspectRatio: '7/5' }}
                                 />
@@ -1187,22 +1181,21 @@ export default function PolaromaPage() {
                         </div>
                         <div className="reveal-left">
                             <div className="inline-block px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-display font-semibold uppercase tracking-widest mb-4">
-                                Style Library
+                                Preset Library
                             </div>
                             <h2 className="font-display font-extrabold text-3xl lg:text-4xl text-white leading-tight mb-5">
-                                200+ handcrafted styles by real photographers
+                                200+ calibrated presets for instant styling
                             </h2>
                             <p className="text-gray-400 text-base leading-relaxed mb-6">
-                                Every style in our library was developed in collaboration with
-                                professional photographers — not just generated by AI. Each
-                                preset captures authentic light characteristics, film grain, and
-                                color science.
+                                Every style in our library is built using precise mathematical matrices to emulate
+                                genuine analog film and professional color science. Enjoy zero AI artifacts, zero
+                                hallucinations—just pure, clean, organic rendering of light and color instantly.
                             </p>
                             <ul className="space-y-3 mb-8">
                                 {[
-                                    'Inspired by classic film stocks: Kodak Portra, Fuji Velvia, Ilford HP5',
-                                    'Real-time preview before applying — no surprises',
-                                    'New styles added monthly based on community votes',
+                                    'Faithfully emulates classic film stocks: Kodak Portra, Fuji Velvia, Ilford HP5',
+                                    'Instant mathematical matrix rendering — zero processing or cloud wait times',
+                                    '100% free to explore, apply, and mix with no hidden premium paywalls',
                                 ].map((item) => (
                                     <li key={item} className="flex items-center gap-3 text-sm text-gray-300">
                                         <IconCheck />
@@ -1211,43 +1204,44 @@ export default function PolaromaPage() {
                                 ))}
                             </ul>
                             <button
-                                onClick={() => scrollTo('pricing')}
+                                onClick={() => scrollTo('features')}
                                 className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-display font-semibold text-sm transition-colors"
                             >
-                                Explore All Styles <IconArrow />
+                                Explore All Presets <IconArrow />
                             </button>
                         </div>
                     </div>
 
-                    {/* Detail 2 */}
+                    {/* Detail 2 - Precision Element Controls */}
                     <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
                         <div className="order-2 lg:order-1 reveal-right">
-                            <div className="inline-block px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400 text-xs font-display font-semibold uppercase tracking-widest mb-4">
-                                Batch Editing
+                            <div className="inline-block px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-display font-semibold uppercase tracking-widest mb-4">
+                                Precision Tuning
                             </div>
                             <h2 className="font-display font-extrabold text-3xl lg:text-4xl text-white leading-tight mb-5">
-                                Edit your entire shoot in one go
+                                Fine-tune lighting, tint, and details on your own
                             </h2>
                             <p className="text-gray-400 text-base leading-relaxed mb-6">
-                                Upload up to 500 photos at once. Apply consistent edits across
-                                all of them, or let Polaroma's AI automatically detect the best
-                                individual corrections for each shot.
+                                Take complete creative control over your composition. Tweak and modify individual
+                                image elements interactively using raw mathematical adjustment engines. No black-box
+                                algorithms guessing your style—manually sculpt exposure, recovery highlights, and
+                                subtle tints to achieve your exact goal look.
                             </p>
                             <div className="grid grid-cols-2 gap-4 mb-8">
                                 <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
-                                    <p className="font-display font-extrabold text-2xl text-white mb-1">500</p>
-                                    <p className="text-xs text-gray-400">Max photos per batch</p>
+                                    <p className="font-display font-extrabold text-2xl text-white mb-1">Pure Calibration</p>
+                                    <p className="text-xs text-gray-400">Zero AI distortion or alteration</p>
                                 </div>
                                 <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08]">
-                                    <p className="font-display font-extrabold text-2xl text-white mb-1">3 min</p>
-                                    <p className="text-xs text-gray-400">Avg time for 100 photos</p>
+                                    <p className="font-display font-extrabold text-2xl text-white mb-1">100% Free</p>
+                                    <p className="text-xs text-gray-400">Unrestricted adjustment controls</p>
                                 </div>
                             </div>
                             <button
-                                onClick={() => scrollTo('pricing')}
+                                onClick={() => scrollTo('features')}
                                 className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 font-display font-semibold text-sm transition-colors"
                             >
-                                Try Batch Mode Free <IconArrow />
+                                Open Studio Controls <IconArrow />
                             </button>
                         </div>
                         <div className="order-1 lg:order-2 reveal-left">
@@ -1255,7 +1249,7 @@ export default function PolaromaPage() {
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src="https://picsum.photos/seed/feature-detail-2/700/500"
-                                    alt="Batch editing"
+                                    alt="Manual adjustment suite"
                                     className="w-full object-cover"
                                     style={{ aspectRatio: '7/5' }}
                                 />
@@ -1281,14 +1275,14 @@ export default function PolaromaPage() {
             </section>
 
             {/* ══ TESTIMONIALS ════════════════════════════════════ */}
-            <section id="testimonials" className="py-24 lg:py-32">
+            <section id="testimonials" className="py-24 lg:py-32 bg-[#030712]">
                 <div className="max-w-7xl mx-auto px-6 lg:px-8">
                     <div className="text-center mb-12">
-                        <p className="text-blue-400 text-xs font-display font-semibold uppercase tracking-widest mb-3 reveal">
+                        <p className="text-blue-500 text-xs font-display font-semibold uppercase tracking-widest mb-3 reveal">
                             Real Reviews
                         </p>
                         <h2 className="font-display font-extrabold text-4xl lg:text-5xl text-white leading-tight reveal delay-100">
-                            Loved by <span className="gradient-text">12,000+ creators</span>
+                            Loved by <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">12,000+ creators</span>
                         </h2>
                     </div>
 
@@ -1307,14 +1301,31 @@ export default function PolaromaPage() {
                                 <div
                                     key={slideIdx}
                                     style={{ minWidth: '100%', width: '100%' }}
-                                    className="grid md:grid-cols-3 gap-5 px-1"
+                                    className="grid md:grid-cols-3 gap-6 px-2"
                                 >
                                     {slide.map((item, itemIdx) => (
-                                        <TestimonialCard
+                                        <div
                                             key={item.name}
-                                            item={item}
-                                            featured={slideIdx === 0 && itemIdx === 1}
-                                        />
+                                            className={`p-8 rounded-2xl border transition-all duration-300 flex flex-col justify-between h-full ${slideIdx === 0 && itemIdx === 1
+                                                    ? 'bg-blue-950/30 border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.1)]'
+                                                    : 'bg-white/[0.02] border-white/[0.08] hover:border-blue-500/20'
+                                                }`}
+                                        >
+                                            <p className="text-gray-300 text-base leading-relaxed mb-6 italic">
+                                                "{item.content}"
+                                            </p>
+                                            <div className="flex items-center gap-4">
+                                                <img
+                                                    src={item.avatar}
+                                                    alt={item.name}
+                                                    className="w-11 h-11 rounded-full object-cover border border-white/10"
+                                                />
+                                                <div>
+                                                    <h4 className="text-white font-display font-bold text-sm">{item.name}</h4>
+                                                    <p className="text-gray-500 text-xs">{item.role}</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             ))}
@@ -1334,6 +1345,7 @@ export default function PolaromaPage() {
                                                 ? '#3b82f6'
                                                 : 'rgba(255,255,255,0.2)',
                                     }}
+                                    aria-label={`Go to slide ${i + 1}`}
                                 />
                             ))}
                         </div>
@@ -1345,9 +1357,9 @@ export default function PolaromaPage() {
                                     (i) => (i - 1 + TESTIMONIAL_SLIDES.length) % TESTIMONIAL_SLIDES.length,
                                 )
                             }
-                            className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-2 w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-blue-400 hover:border-blue-500/40 transition-all"
+                            className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-2 w-10 h-10 rounded-full bg-slate-900/80 border border-white/10 flex items-center justify-center text-gray-400 hover:text-blue-400 hover:border-blue-500/40 transition-all backdrop-blur-sm z-10"
                         >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
@@ -1355,9 +1367,9 @@ export default function PolaromaPage() {
                             onClick={() =>
                                 setTestimonialIndex((i) => (i + 1) % TESTIMONIAL_SLIDES.length)
                             }
-                            className="absolute right-0 top-[45%] -translate-y-1/2 translate-x-2 w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-blue-400 hover:border-blue-500/40 transition-all"
+                            className="absolute right-0 top-[45%] -translate-y-1/2 translate-x-2 w-10 h-10 rounded-full bg-slate-900/80 border border-white/10 flex items-center justify-center text-gray-400 hover:text-blue-400 hover:border-blue-500/40 transition-all backdrop-blur-sm z-10"
                         >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                         </button>

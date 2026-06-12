@@ -21,7 +21,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
     const [image, setImage] = useState<string | null>(null)
     const [fileName, setFileName] = useState<string>("")
     const [zoom, setZoom] = useState(25)
-    const [splitPos, setSplitPos] = useState(50)
+    const [splitPos, setSplitPos] = useState(100)
     const [isDraggingSplit, setIsDraggingSplit] = useState(false)
     const [isDraggingOver, setIsDraggingOver] = useState(false)
     const [imageDimensions, setImageDimensions] = useState({ w: 0, h: 0 })

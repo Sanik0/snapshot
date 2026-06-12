@@ -431,11 +431,17 @@ const HeroComparison: FC = () => {
         const onMouseMove = (e: MouseEvent) => {
             if (draggingRef.current) setPosition(e.clientX)
         }
-        const onMouseUp = () => { draggingRef.current = false }
+        const onMouseUp = () => {
+            draggingRef.current = false
+            dirRef.current = pctRef.current > 50 ? -1 : 1
+        }
         const onTouchMove = (e: TouchEvent) => {
             if (draggingRef.current) setPosition(e.touches[0].clientX)
         }
-        const onTouchEnd = () => { draggingRef.current = false }
+        const onTouchEnd = () => {
+            draggingRef.current = false
+            dirRef.current = pctRef.current > 50 ? -1 : 1
+        }
 
         window.addEventListener('mousemove', onMouseMove)
         window.addEventListener('mouseup', onMouseUp)
@@ -480,7 +486,7 @@ const HeroComparison: FC = () => {
             {/* After image (full width, behind) */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-                src="/landing_images/hero_enhanced.png"
+                src="/landing_images/hero_original.png"
                 alt="After: AI Enhanced"
                 className="absolute inset-0 w-full h-full object-cover"
                 draggable={false}
@@ -493,7 +499,7 @@ const HeroComparison: FC = () => {
             >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                    src="/landing_images/hero_original.png"
+                    src="/landing_images/hero_enhanced.png"
                     alt="Before: Original"
                     className="absolute inset-0 w-full h-full object-cover"
                     ref={clipRef}
@@ -827,7 +833,7 @@ export default function PolaromaPage() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-display font-bold text-white">Cinematic Film</p>
+                                    <p className="text-xs font-display font-bold text-white">Camcorder</p>
                                     <p className="text-xs text-gray-400">Style applied in 1.2s</p>
                                 </div>
                             </div>

@@ -758,7 +758,7 @@ export default function PolaromaPage() {
                         <div>
                             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-display font-semibold tracking-widest uppercase mb-6 reveal">
                                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                                AI-Powered Photo Studio
+                                Signature Style Photo Studio
                             </div>
 
                             <h1 className="font-display font-extrabold text-5xl lg:text-6xl xl:text-7xl leading-[1.06] tracking-tight text-white mb-6 reveal delay-100">
@@ -839,7 +839,7 @@ export default function PolaromaPage() {
                             </div>
 
                             <div className="absolute -top-4 -right-4 px-4 py-3 bg-[#0d0d14] border border-white/10 rounded-xl shadow-xl reveal delay-500">
-                                <p className="text-xs text-gray-400 mb-0.5">AI Accuracy</p>
+                                <p className="text-xs text-gray-400 mb-0.5">Detail Precision</p>
                                 <p className="text-2xl font-display font-extrabold gradient-text">98.7%</p>
                             </div>
                         </div>
@@ -857,7 +857,7 @@ export default function PolaromaPage() {
                         Trusted by creators at
                     </p>
                     <div className="grid grid-cols-3 md:grid-cols-6 gap-8 items-center">
-                        {['ADOBE', 'VSCO', 'GETTY', 'CANVA', 'UNSPLASH', 'LIGHTROOM'].map(
+                        {['ADOBE', 'VSCO', 'GETTY', 'CANVA', 'UNSPLASH', 'PINTEREST'].map(
                             (brand, i) => (
                                 <div key={brand} className={`text-center reveal delay-${(i % 3 + 1) * 100}`}>
                                     <p className="font-display font-bold text-lg text-gray-600 hover:text-blue-400 transition-colors cursor-default">
@@ -882,9 +882,9 @@ export default function PolaromaPage() {
                             <span className="gradient-text">perfect your photos</span>
                         </h2>
                         <p className="text-gray-400 text-base leading-relaxed reveal delay-200">
-                            From one-click presets to granular AI controls — Polaroma gives
-                            you a complete suite of tools that would otherwise take hours to
-                            achieve manually.
+                            Skip the AI hallucinations. Polaroma uses pure image mathematics and organic rendering
+                            to give you total creative control. Choose from a massive library of presets, adjust
+                            your elements, and craft your signature look—100% free.
                         </p>
                     </div>
 
@@ -900,8 +900,8 @@ export default function PolaromaPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1m-10 3h10M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
                                     </svg>
                                 ),
-                                title: 'AI Style Transfer',
-                                desc: 'Apply iconic photography styles from Ansel Adams, Vivian Maier, and modern Instagram aesthetics with a single click.',
+                                title: 'Massive Preset Library',
+                                desc: 'Instantly apply dozens of cinematic film styles, vintage aesthetics, and artistic filters to establish your baseline look with a single click.',
                             },
                             {
                                 delay: 'delay-200',
@@ -913,8 +913,8 @@ export default function PolaromaPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                 ),
-                                title: 'Smart Background Removal',
-                                desc: 'Remove or replace backgrounds with pixel-perfect precision. Our AI detects hair, fur, and complex edges effortlessly.',
+                                title: 'Gaussian Math Engine',
+                                desc: 'True organic rendering. Our system processes filters using precise mathematical algorithms and pixel matrices, ensuring natural blends without artificial AI distortion.',
                             },
                             {
                                 delay: 'delay-300',
@@ -926,8 +926,8 @@ export default function PolaromaPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m1.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                     </svg>
                                 ),
-                                title: 'Auto Light & Tone',
-                                desc: 'Our AI reads the scene and automatically corrects exposure, white balance, shadows, and highlights like a professional colorist.',
+                                title: 'Precision Lighting Balance',
+                                desc: 'Take complete command over your environment. Manually dial in exposure, recovery highlights, and shadows to capture the exact luminance your composition needs.',
                             },
                             {
                                 delay: 'delay-100',
@@ -939,8 +939,8 @@ export default function PolaromaPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                                     </svg>
                                 ),
-                                title: 'AI Upscaling (4×)',
-                                desc: 'Upscale photos up to 4× their original resolution without losing detail. Perfect for printing large-format canvases.',
+                                title: 'Granular Tint & Tone',
+                                desc: 'Fine-tune color temperature and specific tint elements. Calibrate subtle undertones on your own to safely maintain authentic color accuracy.',
                             },
                             {
                                 delay: 'delay-200',
@@ -952,8 +952,8 @@ export default function PolaromaPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                     </svg>
                                 ),
-                                title: 'Portrait Retouching',
-                                desc: 'Skin smoothing, eye enhancement, and blemish removal that look natural — not over-processed. Portraits that feel human.',
+                                title: '100% Free to Use',
+                                desc: 'No locked features, no premium tokens, and no subscription popups. Access our complete collection of presets and adjustments entirely free.',
                             },
                             {
                                 delay: 'delay-300',
@@ -965,8 +965,8 @@ export default function PolaromaPage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
                                 ),
-                                title: 'Batch Processing',
-                                desc: 'Edit 500 photos at once with consistent style settings. Save your presets and apply them across entire shoots in minutes.',
+                                title: 'Total Element Modification',
+                                desc: 'Achieve your goal look on your own terms. Tweak and modify individual image aspects interactively to build a bespoke aesthetic from scratch.',
                             },
                         ].map((feature) => (
                             <div

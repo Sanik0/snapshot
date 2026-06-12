@@ -1009,42 +1009,149 @@ export default function PolaromaPage() {
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
                             {
-                                seed: 'step1-upload',
-                                caption: 'Drop your photo here',
                                 num: '1',
                                 title: 'Upload Your Photo',
                                 desc: 'Drag and drop any JPEG, PNG, or RAW file. We support up to 50MP images.',
                                 delay: 'delay-100',
+                                caption: 'Drop your photo here',
+                                mockup: (
+                                    <svg viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                                        <rect width="600" height="340" fill="#0a0a0a" />
+                                        {/* Dashed drop zone */}
+                                        <rect x="80" y="40" width="440" height="260" rx="16" fill="#111" stroke="#2563EB" strokeWidth="2" strokeDasharray="8 5" />
+                                        {/* Upload icon */}
+                                        <circle cx="300" cy="130" r="36" fill="#1a1a2e" />
+                                        <path d="M300 150 L300 118 M286 132 L300 118 L314 132" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                                        <rect x="280" y="150" width="40" height="5" rx="2.5" fill="#2563EB" opacity="0.4" />
+                                        {/* Text */}
+                                        <text x="300" y="208" textAnchor="middle" fill="white" fontSize="15" fontFamily="sans-serif" fontWeight="600">Drop your photo here</text>
+                                        <text x="300" y="230" textAnchor="middle" fill="#555" fontSize="11" fontFamily="sans-serif">JPEG, PNG, RAW — up to 50MP</text>
+                                        {/* Format pills */}
+                                        <rect x="198" y="252" width="52" height="22" rx="11" fill="#1a1a1a" stroke="#333" strokeWidth="1" />
+                                        <text x="224" y="267" textAnchor="middle" fill="#666" fontSize="10" fontFamily="sans-serif">JPEG</text>
+                                        <rect x="262" y="252" width="52" height="22" rx="11" fill="#1a1a1a" stroke="#333" strokeWidth="1" />
+                                        <text x="288" y="267" textAnchor="middle" fill="#666" fontSize="10" fontFamily="sans-serif">PNG</text>
+                                        <rect x="326" y="252" width="52" height="22" rx="11" fill="#1a1a1a" stroke="#333" strokeWidth="1" />
+                                        <text x="352" y="267" textAnchor="middle" fill="#666" fontSize="10" fontFamily="sans-serif">RAW</text>
+                                    </svg>
+                                ),
                             },
                             {
-                                seed: 'step2-style',
-                                caption: 'Choose from 200+ styles',
                                 num: '2',
                                 title: 'Choose a Style',
-                                desc: 'Browse 200+ AI-curated styles — film, portrait, landscape, vintage, and more.',
+                                desc: 'Browse 20+ Precision-tuned styles — film, camcorder, vhs, vintage, and more.',
                                 delay: 'delay-200',
+                                caption: 'Choose from 20+ styles',
+                                mockup: (
+                                    <svg viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                                        <rect width="600" height="340" fill="#0a0a0a" />
+                                        {/* Main preview area */}
+                                        <rect x="20" y="20" width="370" height="220" rx="10" fill="#111" stroke="#222" strokeWidth="1" />
+                                        {/* Fake photo — gradient blocks */}
+                                        <rect x="20" y="20" width="370" height="220" rx="10" fill="url(#photograd)" />
+                                        <defs>
+                                            <linearGradient id="photograd" x1="0" y1="0" x2="1" y2="1">
+                                                <stop offset="0%" stopColor="#1a1a2e" />
+                                                <stop offset="100%" stopColor="#2d1b4e" />
+                                            </linearGradient>
+                                        </defs>
+                                        {/* Split line */}
+                                        <line x1="205" y1="20" x2="205" y2="240" stroke="white" strokeWidth="2" />
+                                        <circle cx="205" cy="130" r="10" fill="white" />
+                                        <path d="M200 130 L196 126 M200 130 L196 134 M210 130 L214 126 M210 130 L214 134" stroke="#333" strokeWidth="1.5" strokeLinecap="round" />
+                                        {/* Before label */}
+                                        <rect x="28" y="28" width="44" height="18" rx="4" fill="black" fillOpacity="0.6" />
+                                        <text x="50" y="41" textAnchor="middle" fill="white" fontSize="9" fontFamily="sans-serif">BEFORE</text>
+                                        {/* After label */}
+                                        <rect x="214" y="28" width="36" height="18" rx="4" fill="#2563EB" fillOpacity="0.8" />
+                                        <text x="232" y="41" textAnchor="middle" fill="white" fontSize="9" fontFamily="sans-serif">AFTER</text>
+                                        {/* Preset filmstrip */}
+                                        <rect x="20" y="252" width="560" height="72" rx="8" fill="#111" stroke="#1e1e1e" strokeWidth="1" />
+                                        {[
+                                            { x: 32, label: "Polar", active: false },
+                                            { x: 100, label: "Vintage", active: false },
+                                            { x: 168, label: "Y2K", active: true },
+                                            { x: 236, label: "Lomo", active: false },
+                                            { x: 304, label: "Noir", active: false },
+                                            { x: 372, label: "CRT", active: false },
+                                            { x: 440, label: "Expired", active: false },
+                                        ].map(({ x, label, active }) => (
+                                            <g key={label}>
+                                                <rect x={x} y="260" width="56" height="44" rx="6"
+                                                    fill={active ? "#1D4ED8" : "#1a1a1a"}
+                                                    stroke={active ? "#2563EB" : "#2a2a2a"}
+                                                    strokeWidth="1"
+                                                />
+                                                <text x={x + 28} y="287" textAnchor="middle" fill={active ? "white" : "#555"} fontSize="9" fontFamily="sans-serif">{label}</text>
+                                            </g>
+                                        ))}
+                                        {/* Sidebar panels */}
+                                        <rect x="400" y="20" width="180" height="220" rx="8" fill="#111" stroke="#1e1e1e" strokeWidth="1" />
+                                        {[
+                                            { label: "Exposure", val: 65 },
+                                            { label: "Contrast", val: 45 },
+                                            { label: "Saturation", val: 30 },
+                                            { label: "Grain", val: 55 },
+                                        ].map(({ label, val }, i) => (
+                                            <g key={label}>
+                                                <text x="412" y={50 + i * 48} fill="#888" fontSize="9" fontFamily="sans-serif">{label}</text>
+                                                <rect x="412" y={56 + i * 48} width="156" height="4" rx="2" fill="#222" />
+                                                <rect x="412" y={56 + i * 48} width={val * 1.56} height="4" rx="2" fill="#2563EB" />
+                                                <circle cx={412 + val * 1.56} cy={58 + i * 48} r="6" fill="white" />
+                                            </g>
+                                        ))}
+                                    </svg>
+                                ),
                             },
                             {
-                                seed: 'step3-download',
-                                caption: 'Ready in under 3 seconds',
                                 num: '3',
                                 title: 'Download & Share',
                                 desc: 'Export in full resolution. Share directly to Instagram, print, or save to your drive.',
                                 delay: 'delay-300',
+                                caption: 'Ready in under 3 seconds',
+                                mockup: (
+                                    <svg viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                                        <rect width="600" height="340" fill="#0a0a0a" />
+                                        {/* Photo result */}
+                                        <rect x="180" y="20" width="240" height="180" rx="10" fill="#111" stroke="#222" strokeWidth="1" />
+                                        <rect x="180" y="20" width="240" height="180" rx="10" fill="url(#resultgrad)" />
+                                        <defs>
+                                            <linearGradient id="resultgrad" x1="0" y1="0" x2="1" y2="1">
+                                                <stop offset="0%" stopColor="#1a2a1a" />
+                                                <stop offset="100%" stopColor="#0a1628" />
+                                            </linearGradient>
+                                        </defs>
+                                        {/* Checkmark badge */}
+                                        <circle cx="300" cy="110" r="28" fill="#2563EB" fillOpacity="0.15" stroke="#2563EB" strokeWidth="1.5" />
+                                        <path d="M288 110 L297 119 L314 102" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                                        {/* Resolution badge */}
+                                        <rect x="210" y="178" width="180" height="22" rx="0 0 10 10" fill="black" fillOpacity="0.7" />
+                                        <text x="300" y="193" textAnchor="middle" fill="#888" fontSize="10" fontFamily="sans-serif">Full Resolution • 50MP</text>
+                                        {/* Download button */}
+                                        <rect x="160" y="220" width="280" height="44" rx="10" fill="#2563EB" />
+                                        <text x="300" y="247" textAnchor="middle" fill="white" fontSize="14" fontFamily="sans-serif" fontWeight="600">Download Photo</text>
+                                        {/* Share row */}
+                                        <text x="300" y="286" textAnchor="middle" fill="#444" fontSize="10" fontFamily="sans-serif">Share to</text>
+                                        {[
+                                            { x: 220, label: "IG" },
+                                            { x: 270, label: "TW" },
+                                            { x: 320, label: "FB" },
+                                            { x: 370, label: "LK" },
+                                        ].map(({ x, label }) => (
+                                            <g key={label}>
+                                                <circle cx={x} cy="308" r="14" fill="#1a1a1a" stroke="#2a2a2a" strokeWidth="1" />
+                                                <text x={x} y="313" textAnchor="middle" fill="#555" fontSize="9" fontFamily="sans-serif">{label}</text>
+                                            </g>
+                                        ))}
+                                    </svg>
+                                ),
                             },
                         ].map((step) => (
                             <div key={step.num} className={`relative reveal ${step.delay}`}>
                                 <div className="mb-6 rounded-2xl overflow-hidden border border-white/10 relative" style={{ aspectRatio: '16/9' }}>
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img
-                                        src={`https://picsum.photos/seed/${step.seed}/600/340`}
-                                        alt={step.title}
-                                        className="w-full h-full object-cover opacity-70"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                                        <p className="text-white font-display font-semibold text-sm">
-                                            {step.caption}
-                                        </p>
+                                    {step.mockup}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4 pointer-events-none">
+                                        <p className="text-white font-display font-semibold text-sm">{step.caption}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4">
@@ -1052,9 +1159,7 @@ export default function PolaromaPage() {
                                         {step.num}
                                     </span>
                                     <div>
-                                        <h3 className="font-display font-bold text-white text-lg mb-1">
-                                            {step.title}
-                                        </h3>
+                                        <h3 className="font-display font-bold text-white text-lg mb-1">{step.title}</h3>
                                         <p className="text-sm text-gray-400 leading-relaxed">{step.desc}</p>
                                     </div>
                                 </div>

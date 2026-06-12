@@ -534,7 +534,15 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         const canvas = document.createElement("canvas")
         canvas.width = video.videoWidth
         canvas.height = video.videoHeight
-        canvas.getContext("2d")!.drawImage(video, 0, 0)
+        const captureCtx = canvas.getContext("2d")!
+
+        if (facingMode === "user") {
+            // Flip horizontally before drawing
+            captureCtx.translate(canvas.width, 0)
+            captureCtx.scale(-1, 1)
+        }
+
+        captureCtx.drawImage(video, 0, 0)
         canvas.toBlob((blob) => {
             if (!blob) return
             const file = new File([blob], "camera-photo.jpg", { type: "image/jpeg" })
@@ -1122,6 +1130,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                             playsInline
                             muted
                             className="absolute inset-0 w-full h-full object-cover transition-transform"
+                            style={facingMode === "user" ? { transform: "scaleX(-1)" } : undefined}
                         />
 
                         {/* Zoom indicator */}

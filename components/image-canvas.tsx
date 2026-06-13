@@ -80,7 +80,10 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                 skipFonts: true,
             })
             const link = document.createElement("a")
-            link.download = "snapshot.jpg"
+            const now = new Date()
+            const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`
+            const time = `${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`
+            link.download = `polaroma_${date}_${time}.jpg`
             link.href = dataUrl
             link.click()
         } catch (err) {
@@ -457,7 +460,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
         if (!image) return
         const img = imageElementRef.current
         if (!img || !processedCanvasRef.current) return
-        if (!adjustments.sepiaRemap && !adjustments.crtEffect && !(adjustments as any).nightVisionEffect) return
+        if (!adjustments.sepiaRemap && !adjustments.crtEffect && !(adjustments as any).nightVisionEffect && !(adjustments as any).ghostEffect) return
 
         const run = () => {
             if (!processedCanvasRef.current) return
@@ -750,7 +753,7 @@ export function ImageCanvas({ activePreset, liveFilter, adjustments, onPresetCha
                                     )}
 
                                     {/* Processed canvas — shown only when pixel processing needed */}
-                                    {(adjustments.sepiaRemap || adjustments.crtEffect || (adjustments as any).nightVisionEffect) && (
+                                    {(adjustments.sepiaRemap || adjustments.crtEffect || (adjustments as any).nightVisionEffect || (adjustments as any).ghostEffect) && (
                                         <canvas
                                             ref={processedCanvasRef}
                                             className="absolute inset-0 pointer-events-none"

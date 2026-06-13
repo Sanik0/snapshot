@@ -12,7 +12,6 @@ export type Preset = {
     shadows: number
     saturation: number
     grain: number
-    // New fields
     sharpness: number
     blur: number
     fisheye: number
@@ -34,6 +33,7 @@ export type Preset = {
     camcorderEffect: boolean
     cctvRemap: boolean
     nightVisionEffect: boolean
+    ghostEffect: boolean
   }
   filter: string
 }
@@ -355,6 +355,69 @@ export function applyCanvasFilter(
     drawNVText("REC", w - pad - ctx.measureText("REC").width, h - pad)
   }
 
+  if ((adj as any).ghostEffect) {
+    // ── Ghost 1 — main image slightly darkened ──
+    const ghost = document.createElement("canvas")
+    ghost.width = w
+    ghost.height = h
+    const gCtx = ghost.getContext("2d")!
+
+    // Motion blur — draw the image multiple times offset in a direction
+    const steps = 12
+    const offsetX = w * 0.018  // horizontal smear
+    const offsetY = h * 0.022  // vertical smear
+    gCtx.globalAlpha = 1 / steps
+    for (let s = 0; s < steps; s++) {
+      const t = s / steps
+      gCtx.drawImage(
+        canvas,
+        -offsetX * t * steps * 0.15,
+        -offsetY * t * steps * 0.15
+      )
+    }
+    gCtx.globalAlpha = 1
+
+    // Draw blurred motion result back
+    ctx.clearRect(0, 0, w, h)
+    ctx.filter = `blur(${Math.round(w * 0.006)}px)`
+    ctx.drawImage(ghost, 0, 0)
+    ctx.filter = "none"
+
+    // ── Ghost 2 — second exposure, offset and transparent ──
+    const shiftX = w * 0.04
+    const shiftY = h * 0.05
+    ctx.globalAlpha = 0.45
+    ctx.globalCompositeOperation = "screen"
+    ctx.filter = `blur(${Math.round(w * 0.004)}px)`
+    ctx.drawImage(canvas, shiftX, shiftY)
+    ctx.filter = "none"
+    ctx.globalAlpha = 1
+    ctx.globalCompositeOperation = "source-over"
+
+    // ── Chromatic aberration on the ghost ──
+    const aberrData = ctx.getImageData(0, 0, w, h)
+    const ab = aberrData.data
+    const shift = Math.max(3, Math.round(w * 0.005))
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4
+        const rSrc = x + shift < w ? (y * w + x + shift) * 4 : i
+        const bSrc = x - shift >= 0 ? (y * w + x - shift) * 4 : i
+        ab[i] = ab[rSrc]
+        ab[i + 2] = ab[bSrc + 2]
+      }
+    }
+    ctx.putImageData(aberrData, 0, 0)
+
+    // ── Dark vignette — heavy corners like a low light lens ──
+    const vig = ctx.createRadialGradient(w * 0.5, h * 0.42, h * 0.2, w * 0.5, h * 0.5, h * 0.78)
+    vig.addColorStop(0, "rgba(0,0,0,0)")
+    vig.addColorStop(0.6, "rgba(0,0,0,0.1)")
+    vig.addColorStop(1, "rgba(0,0,0,0.82)")
+    ctx.fillStyle = vig
+    ctx.fillRect(0, 0, w, h)
+  }
+
   return canvas
 }
 
@@ -415,6 +478,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -452,6 +516,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: true,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -489,6 +554,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -526,6 +592,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -535,32 +602,43 @@ export const FILM_PRESETS: Preset[] = [
     },
     filter: "none",
   },
-  {
-    id: "fuji-400h",
-    name: " Fj Light",
-    image: "/cameras/yellowfuji.png",
+    {
+    id: "ghost-blur",
+    name: "Ghost",
+    image: "/cameras/ghost.png",
     adjustments: {
-      temperature: -5, tint: -10, exposure: 10, contrast: -10,
-      highlight: -15, shadows: 25, saturation: -10, grain: 35,
-      sharpness: 0, blur: 0, fisheye: 0, fade: 0, hue: 0,
+      temperature: 20,
+      tint: 5,
+      exposure: -10,
+      contrast: 25,
+      highlight: -20,
+      shadows: 30,
+      saturation: 20,
+      grain: 60,
+      sharpness: 0,
+      blur: 0,
+      fisheye: 0,
+      fade: 10,
+      hue: 5,
       lightLeakOpacity: 0,
       lightLeakColor: "#ff6600",
       lightLeakPosition: "top-right",
       dust: 0,
-      dateStamp: false,
-      dateStampColor: "#ff8800",
+      dateStamp: true,
+      dateStampColor: "#ff6600",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: true,
+      nightVisionEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
       camcorderEffect: false,
       cctvRemap: false,
-      nightVisionEffect: false
     },
-    filter: "contrast(0.95) saturate(0.9) brightness(1.1) hue-rotate(-5deg)",
+    filter: "none",
   },
   {
     id: "camcorder",
@@ -590,6 +668,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -627,6 +706,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -664,6 +744,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -672,6 +753,72 @@ export const FILM_PRESETS: Preset[] = [
       nightVisionEffect: false
     },
     filter: "brightness(1.05) contrast(1.25) saturate(1.2) sepia(0.15) hue-rotate(8deg)",
+  },
+    {
+    id: "fuji-400h",
+    name: " Fj Light",
+    image: "/cameras/yellowfuji.png",
+    adjustments: {
+      temperature: -5, tint: -10, exposure: 10, contrast: -10,
+      highlight: -15, shadows: 25, saturation: -10, grain: 35,
+      sharpness: 0, blur: 0, fisheye: 0, fade: 0, hue: 0,
+      lightLeakOpacity: 0,
+      lightLeakColor: "#ff6600",
+      lightLeakPosition: "top-right",
+      dust: 0,
+      dateStamp: false,
+      dateStampColor: "#ff8800",
+      shadowTintColor: "#000000",
+      highlightTintColor: "#000000",
+      sepiaRemap: false,
+      crtEffect: false,
+      ghostEffect: false,
+      rainbowLeakOpacity: 0,
+      rainbowLeakAngle: 135,
+      rainbowLeakWidth: 40,
+      camcorderEffect: false,
+      cctvRemap: false,
+      nightVisionEffect: false
+    },
+    filter: "contrast(0.95) saturate(0.9) brightness(1.1) hue-rotate(-5deg)",
+  },
+    {
+    id: "golden-sepia",
+    name: "Gldn Hr",
+    image: "/cameras/goldenhour.png",
+    adjustments: {
+      temperature: 80,
+      tint: 10,
+      exposure: 8,
+      contrast: 30,
+      highlight: 20,
+      shadows: 50,
+      saturation: -90,
+      grain: 70,
+      sharpness: 0,
+      blur: 5,
+      fisheye: 0,
+      fade: 5,
+      hue: 15,
+      lightLeakOpacity: 35,
+      lightLeakColor: "#cc8833",
+      lightLeakPosition: "center-right",
+      dust: 60,
+      dateStamp: false,
+      dateStampColor: "#ff8800",
+      shadowTintColor: "#000000",
+      highlightTintColor: "#000000",
+      sepiaRemap: true,
+      crtEffect: false,
+      ghostEffect: false,
+      rainbowLeakOpacity: 0,
+      rainbowLeakAngle: 135,
+      rainbowLeakWidth: 40,
+      camcorderEffect: false,
+      cctvRemap: false,
+      nightVisionEffect: false
+    },
+    filter: "brightness(1.05) contrast(1.3) saturate(0.1) sepia(1) hue-rotate(8deg)",
   },
   {
     id: "overexposed-leak",
@@ -701,6 +848,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -738,6 +886,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -746,43 +895,6 @@ export const FILM_PRESETS: Preset[] = [
       nightVisionEffect: false
     },
     filter: "brightness(0.90) contrast(0.70) saturate(0.25) sepia(0.2) hue-rotate(-25deg)",
-  },
-  {
-    id: "golden-sepia",
-    name: "Gldn Hr",
-    image: "/cameras/goldenhour.png",
-    adjustments: {
-      temperature: 80,
-      tint: 10,
-      exposure: 8,
-      contrast: 30,
-      highlight: 20,
-      shadows: 50,
-      saturation: -90,
-      grain: 70,
-      sharpness: 0,
-      blur: 5,
-      fisheye: 0,
-      fade: 5,
-      hue: 15,
-      lightLeakOpacity: 35,
-      lightLeakColor: "#cc8833",
-      lightLeakPosition: "center-right",
-      dust: 60,
-      dateStamp: false,
-      dateStampColor: "#ff8800",
-      shadowTintColor: "#000000",
-      highlightTintColor: "#000000",
-      sepiaRemap: true,
-      crtEffect: false,
-      rainbowLeakOpacity: 0,
-      rainbowLeakAngle: 135,
-      rainbowLeakWidth: 40,
-      camcorderEffect: false,
-      cctvRemap: false,
-      nightVisionEffect: false
-    },
-    filter: "brightness(1.05) contrast(1.3) saturate(0.1) sepia(1) hue-rotate(8deg)",
   },
   {
     id: "green-gel",
@@ -812,6 +924,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: true,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -839,6 +952,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -876,6 +990,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: true,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -913,6 +1028,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: true,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -950,6 +1066,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 55,
       rainbowLeakAngle: 145,
       rainbowLeakWidth: 25,
@@ -987,6 +1104,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: true,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,
@@ -1024,6 +1142,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: true,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 20,
       rainbowLeakAngle: 110,
       rainbowLeakWidth: 15,
@@ -1061,6 +1180,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: false,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 30,
       rainbowLeakAngle: 160,
       rainbowLeakWidth: 20,
@@ -1098,6 +1218,7 @@ export const FILM_PRESETS: Preset[] = [
       highlightTintColor: "#000000",
       sepiaRemap: true,
       crtEffect: false,
+      ghostEffect: false,
       rainbowLeakOpacity: 0,
       rainbowLeakAngle: 135,
       rainbowLeakWidth: 40,

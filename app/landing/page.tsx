@@ -488,7 +488,7 @@ export default function PolaromaPage() {
             title: "Golden Hour Escape",
             creator: "@marcus.visuals",
             preset: "Polar X",
-            category: "Polaroid",
+            category: "portrait",
             image: "/spotlight/digicampolar.jpg", // Tall
         },
         {
@@ -509,11 +509,11 @@ export default function PolaromaPage() {
         },
         {
             id: 4,
-            title: "Studio Warmth",
-            creator: "@jen.portraits",
-            preset: "Chroma Velvia 50",
-            category: "portrait",
-            image: "https://picsum.photos/seed/spot4/600/900", // Extra Tall
+            title: "City Life, New York",
+            creator: "@jen.nguyen",
+            preset: "Camcorder",
+            category: "urban",
+            image: "/spotlight/city.jpg", // Extra Tall
         },
         {
             id: 5,
@@ -533,11 +533,11 @@ export default function PolaromaPage() {
         },
         {
             id: 6,
-            title: "Foggy Pine Ridge",
-            creator: "@pnw.elena",
-            preset: "Matrix Portra 400",
-            category: "landscape",
-            image: "https://picsum.photos/seed/spot5/600/500", // Medium-Short
+            title: "Raining in Shibuya",
+            creator: "@mochi.elena",
+            preset: "Digicam",
+            category: "urban",
+            image: "/spotlight/japan.jpg", // Medium-Short
         },
     ];
 

@@ -39,16 +39,6 @@ interface StatItem {
     label: string
 }
 
-interface PricingPlan {
-    name: string
-    price: { monthly: number; annual: number }
-    description: string
-    cta: string
-    popular: boolean
-    features: string[]
-    missing?: string[]
-}
-
 // ─────────────────────────────────────────────────────────────
 // Static Data
 // ─────────────────────────────────────────────────────────────
@@ -131,48 +121,6 @@ const STATS: StatItem[] = [
     { count: 50000, suffix: '+', label: 'Photos processed' },
     { count: 98, suffix: '%', label: 'Customer satisfaction' },
     { count: 20, suffix: '+', label: 'AI styles available' },
-]
-
-const PRICING_PLANS: PricingPlan[] = [
-    {
-        name: 'Free',
-        price: { monthly: 0, annual: 0 },
-        description: 'Forever free',
-        cta: 'Get Started Free',
-        popular: false,
-        features: ['20 photo edits/month', '30 basic styles', '10 MP max export'],
-        missing: ['Batch processing', 'AI upscaling'],
-    },
-    {
-        name: 'Pro',
-        price: { monthly: 24, annual: 19 },
-        description: 'Billed annually ($228/yr)',
-        cta: 'Start Pro Trial',
-        popular: true,
-        features: [
-            'Unlimited edits',
-            '200+ AI styles',
-            '50 MP full-res export',
-            'Batch up to 100 photos',
-            '4× AI upscaling',
-            'Priority processing',
-        ],
-    },
-    {
-        name: 'Business',
-        price: { monthly: 59, annual: 49 },
-        description: 'Billed annually ($588/yr)',
-        cta: 'Start Business Trial',
-        popular: false,
-        features: [
-            'Everything in Pro',
-            'Batch up to 500 photos',
-            'API access',
-            'White-label exports',
-            'Team collaboration (5 seats)',
-            'Dedicated support',
-        ],
-    },
 ]
 
 // ─────────────────────────────────────────────────────────────
@@ -534,6 +482,65 @@ export default function PolaromaPage() {
 
     const statsRef = useRef<HTMLElement>(null)
 
+    const SPOTLIGHT_PHOTOS = [
+        {
+            id: 1,
+            title: "Golden Hour Escape",
+            creator: "@marcus.visuals",
+            preset: "Matrix Portra 160",
+            category: "film",
+            image: "https://picsum.photos/seed/spot1/600/800", // Tall
+        },
+        {
+            id: 2,
+            title: "Neon Rain on Asphalt",
+            creator: "@tokyo.lens",
+            preset: "Cine-Matrix 800T",
+            category: "urban",
+            image: "https://picsum.photos/seed/spot2/600/450", // Short
+        },
+        {
+            id: 3,
+            title: "Minimalist Sand Dunes",
+            creator: "@vance_raw",
+            preset: "Mono-Chroma HP5",
+            category: "landscape",
+            image: "https://picsum.photos/seed/spot3/600/750", // Medium-Tall
+        },
+        {
+            id: 4,
+            title: "Studio Warmth",
+            creator: "@jen.portraits",
+            preset: "Chroma Velvia 50",
+            category: "portrait",
+            image: "https://picsum.photos/seed/spot4/600/900", // Extra Tall
+        },
+        {
+            id: 5,
+            title: "Foggy Pine Ridge",
+            creator: "@pnw.elena",
+            preset: "Matrix Portra 400",
+            category: "landscape",
+            image: "https://picsum.photos/seed/spot5/600/500", // Medium-Short
+        },
+        {
+            id: 7,
+            title: "Subway Shadows",
+            creator: "@shadow.play",
+            preset: "Mono-Chroma HP5",
+            category: "urban",
+            image: "https://picsum.photos/seed/spot6/600/700", // Medium
+        },
+        {
+            id: 6,
+            title: "Foggy Pine Ridge",
+            creator: "@pnw.elena",
+            preset: "Matrix Portra 400",
+            category: "landscape",
+            image: "https://picsum.photos/seed/spot5/600/500", // Medium-Short
+        },
+    ];
+
     // ── Dark mode ──────────────────────────────────────────────
     useEffect(() => {
         document.documentElement.classList.toggle('dark', isDark)
@@ -579,6 +586,12 @@ export default function PolaromaPage() {
         )
         return () => clearInterval(timer)
     }, [])
+
+    const [activeFilter, setActiveFilter] = useState('all');
+
+    const filteredPhotos = activeFilter === 'all'
+        ? SPOTLIGHT_PHOTOS
+        : SPOTLIGHT_PHOTOS.filter(photo => photo.category === activeFilter);
 
     // ── Nav smooth scroll helper ───────────────────────────────
     const scrollTo = (id: string) => {
@@ -648,7 +661,7 @@ export default function PolaromaPage() {
 
                         {/* Desktop nav links */}
                         <div className="hidden md:flex items-center gap-8">
-                            {['features', 'how-it-works', 'pricing', 'testimonials', 'faq'].map((id) => (
+                            {['spotlight', 'features', 'how-it-works', 'testimonials', 'faq'].map((id) => (
                                 <button
                                     key={id}
                                     onClick={() => scrollTo(id)}
@@ -707,9 +720,9 @@ export default function PolaromaPage() {
                     >
                         <div className="py-4 border-t border-white/5 flex flex-col gap-1">
                             {[
+                                { id: 'spotlight', label: 'Spotlight' },
                                 { id: 'features', label: 'Features' },
                                 { id: 'how-it-works', label: 'How it Works' },
-                                { id: 'pricing', label: 'Pricing' },
                                 { id: 'testimonials', label: 'Reviews' },
                                 { id: 'faq', label: 'FAQ' },
                             ].map((item) => (
@@ -861,6 +874,96 @@ export default function PolaromaPage() {
                             ),
                         )}
                     </div>
+                </div>
+            </section>
+
+
+            {/* ══ MONTHLY PHOTO SPOTLIGHT ════════════════════════════ */}
+            <section id="spotlight" className="py-24 lg:py-32 relative overflow-hidden bg-[#030712]">
+                <div className="absolute inset-0 mesh-bg pointer-events-none opacity-40" />
+
+                <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
+
+                    {/* Header Text */}
+                    <div className="text-center mb-12">
+                        <p className="text-blue-500 text-xs font-display font-semibold uppercase tracking-widest mb-3 reveal">
+                            Community Showcase
+                        </p>
+                        <h2 className="font-display font-extrabold text-4xl lg:text-5xl text-white leading-tight mb-4 reveal delay-100">
+                            Monthly Photo <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Spotlight</span>
+                        </h2>
+                        <p className="text-gray-400 text-base max-w-xl mx-auto reveal delay-200">
+                            Photos submitted by creators, start editing to get your photos featured.
+                        </p>
+
+                        {/* Filter Toggles (Repurposed from pricing billing toggle) */}
+                        <div className="inline-flex items-center gap-1 mt-8 p-1 rounded-full bg-white/5 border border-white/10 reveal delay-300">
+                            {['all', 'film', 'landscape', 'portrait', 'urban'].map((category) => (
+                                <button
+                                    key={category}
+                                    onClick={() => setActiveFilter(category)}
+                                    className="px-4 py-1.5 rounded-full text-xs font-display font-semibold capitalize transition-all"
+                                    style={{
+                                        backgroundColor: activeFilter === category ? '#3b82f6' : 'transparent',
+                                        color: activeFilter === category ? '#fff' : '#9ca3af',
+                                    }}
+                                >
+                                    {category}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Pinterest Masonry Grid Container */}
+                    <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6 max-w-6xl mx-auto [column-fill:_balance]">
+                        {filteredPhotos.map((photo) => (
+                            <div
+                                key={photo.id}
+                                className="break-inside-avoid bg-white/[0.02] border border-white/[0.08] rounded-2xl overflow-hidden group transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.05)]"
+                            >
+                                {/* Image Container wrapper */}
+                                <div className="relative overflow-hidden bg-slate-900">
+                                    <img
+                                        src={photo.image}
+                                        alt={photo.title}
+                                        className="w-full object-cover h-auto transition-transform duration-500 group-hover:scale-[1.02]"
+                                        loading="lazy"
+                                    />
+                                    {/* Soft overlay mask on hover */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-5" />
+                                </div>
+
+                                {/* Details Footer */}
+                                <div className="p-5">
+                                    <div className="flex justify-between items-start gap-2 mb-2">
+                                        <h3 className="font-display font-bold text-white text-base truncate">
+                                            {photo.title}
+                                        </h3>
+                                        <span className="text-[10px] px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 font-medium font-mono shrink-0">
+                                            {photo.preset}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 font-medium">
+                                        by {photo.creator}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Bottom CTA Link */}
+                    <div className="mt-16 text-center reveal delay-400">
+                        <p className="text-sm text-gray-400">
+                            Want your work featured in next week's spotlight?{' '}
+                            <a
+                                href="#upload"
+                                className="text-blue-400 hover:text-blue-300 font-semibold transition-colors inline-flex items-center gap-1"
+                            >
+                                Submit your frame →
+                            </a>
+                        </p>
+                    </div>
+
                 </div>
             </section>
 
@@ -1184,7 +1287,7 @@ export default function PolaromaPage() {
                                 Preset Library
                             </div>
                             <h2 className="font-display font-extrabold text-3xl lg:text-4xl text-white leading-tight mb-5">
-                                200+ calibrated presets for instant styling
+                                20+ calibrated presets for instant styling
                             </h2>
                             <p className="text-gray-400 text-base leading-relaxed mb-6">
                                 Every style in our library is built using precise mathematical matrices to emulate
@@ -1307,8 +1410,8 @@ export default function PolaromaPage() {
                                         <div
                                             key={item.name}
                                             className={`p-8 rounded-2xl border transition-all duration-300 flex flex-col justify-between h-full ${slideIdx === 0 && itemIdx === 1
-                                                    ? 'bg-blue-950/30 border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.1)]'
-                                                    : 'bg-white/[0.02] border-white/[0.08] hover:border-blue-500/20'
+                                                ? 'bg-blue-950/30 border-blue-500/40 shadow-[0_0_30px_rgba(59,130,246,0.1)]'
+                                                : 'bg-white/[0.02] border-white/[0.08] hover:border-blue-500/20'
                                                 }`}
                                         >
                                             <p className="text-gray-300 text-base leading-relaxed mb-6 italic">
@@ -1377,115 +1480,6 @@ export default function PolaromaPage() {
                 </div>
             </section>
 
-            {/* ══ PRICING ══════════════════════════════════════════ */}
-            <section id="pricing" className="py-24 lg:py-32 relative overflow-hidden">
-                <div className="absolute inset-0 mesh-bg pointer-events-none" />
-                <div className="max-w-7xl mx-auto px-6 lg:px-8 relative">
-                    <div className="text-center mb-12">
-                        <p className="text-blue-400 text-xs font-display font-semibold uppercase tracking-widest mb-3 reveal">
-                            Simple Pricing
-                        </p>
-                        <h2 className="font-display font-extrabold text-4xl lg:text-5xl text-white leading-tight mb-4 reveal delay-100">
-                            Start free.{' '}
-                            <span className="gradient-text">Scale as you grow.</span>
-                        </h2>
-                        <p className="text-gray-400 text-base reveal delay-200">
-                            No contracts. Cancel anytime.
-                        </p>
-
-                        {/* Billing toggle */}
-                        <div className="inline-flex items-center gap-1 mt-6 p-1 rounded-full bg-white/5 border border-white/10 reveal delay-300">
-                            <button
-                                onClick={() => setAnnual(false)}
-                                className="px-4 py-1.5 rounded-full text-sm font-display font-semibold transition-all"
-                                style={{
-                                    backgroundColor: !annual ? '#3b82f6' : 'transparent',
-                                    color: !annual ? '#fff' : '#9ca3af',
-                                }}
-                            >
-                                Monthly
-                            </button>
-                            <button
-                                onClick={() => setAnnual(true)}
-                                className="px-4 py-1.5 rounded-full text-sm font-display font-semibold transition-all flex items-center gap-1.5"
-                                style={{
-                                    backgroundColor: annual ? '#3b82f6' : 'transparent',
-                                    color: annual ? '#fff' : '#9ca3af',
-                                }}
-                            >
-                                Annual
-                                <span className="text-xs bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
-                                    −20%
-                                </span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                        {PRICING_PLANS.map((plan, i) => (
-                            <div
-                                key={plan.name}
-                                className={`p-6 lg:p-8 rounded-2xl card-hover reveal delay-${(i + 1) * 100} relative ${plan.popular
-                                    ? 'popular-card bg-gradient-to-b from-blue-500/10 to-blue-500/5 border border-blue-500/30'
-                                    : 'border border-white/10 bg-white/[0.03]'
-                                    }`}
-                            >
-                                {plan.popular && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-500 text-white text-xs font-display font-bold rounded-full">
-                                        Most Popular
-                                    </div>
-                                )}
-                                <p className={`font-display font-semibold text-sm mb-2 ${plan.popular ? 'text-blue-400' : 'text-gray-400'}`}>
-                                    {plan.name}
-                                </p>
-                                <div className="flex items-baseline gap-1 mb-1">
-                                    <p className="font-display font-extrabold text-4xl text-white">
-                                        ${annual ? plan.price.annual : plan.price.monthly}
-                                    </p>
-                                    {plan.price.annual > 0 && (
-                                        <p className="text-sm text-gray-400">/month</p>
-                                    )}
-                                </div>
-                                <p className="text-xs text-gray-500 mb-6">{plan.description}</p>
-                                <button
-                                    className={`w-full text-center py-2.5 rounded-xl text-sm font-display font-semibold transition-all mb-6 ${plan.popular
-                                        ? 'bg-blue-500 hover:bg-blue-600 text-white glow-blue-sm hover:scale-105 active:scale-95'
-                                        : 'border border-white/15 text-gray-300 hover:border-blue-500/50 hover:text-blue-400'
-                                        }`}
-                                >
-                                    {plan.cta}
-                                </button>
-                                <ul className="space-y-3">
-                                    {plan.features.map((f) => (
-                                        <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
-                                            <IconCheck />
-                                            {f}
-                                        </li>
-                                    ))}
-                                    {plan.missing?.map((f) => (
-                                        <li key={f} className="flex items-center gap-2 text-sm text-gray-400 opacity-40">
-                                            <IconX />
-                                            {f}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="mt-10 text-center reveal delay-400">
-                        <p className="text-sm text-gray-400">
-                            Need a custom plan for your agency or enterprise?{' '}
-                            <a
-                                href="mailto:hello@polaroma.com"
-                                className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
-                            >
-                                Contact us →
-                            </a>
-                        </p>
-                    </div>
-                </div>
-            </section>
 
             {/* ══ FAQ ══════════════════════════════════════════════ */}
             <section id="faq" className="py-24 lg:py-32">

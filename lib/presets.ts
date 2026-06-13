@@ -388,7 +388,7 @@ export function buildFilter(adj: Preset["adjustments"] & { vignette?: number }):
 export const FILM_PRESETS: Preset[] = [
   {
     id: "polaroid",
-    name: "Polar",
+    name: "Polar X",
     image: "/cameras/polaroid.png",
     defaultFrame: "/frames/frame9.png",
     adjustments: {

@@ -487,25 +487,25 @@ export default function PolaromaPage() {
             id: 1,
             title: "Golden Hour Escape",
             creator: "@marcus.visuals",
-            preset: "Matrix Portra 160",
-            category: "film",
-            image: "https://picsum.photos/seed/spot1/600/800", // Tall
+            preset: "Polar X",
+            category: "Polaroid",
+            image: "/spotlight/digicampolar.jpg", // Tall
         },
         {
             id: 2,
-            title: "Neon Rain on Asphalt",
-            creator: "@tokyo.lens",
-            preset: "Cine-Matrix 800T",
+            title: "Urban Jungle BGC",
+            creator: "@mike.hawk",
+            preset: "VHS",
             category: "urban",
-            image: "https://picsum.photos/seed/spot2/600/450", // Short
+            image: "/spotlight/bgc.jpg", // Short
         },
         {
             id: 3,
-            title: "Minimalist Sand Dunes",
+            title: "Greeny Landscape",
             creator: "@vance_raw",
-            preset: "Mono-Chroma HP5",
+            preset: "Golden Hr",
             category: "landscape",
-            image: "https://picsum.photos/seed/spot3/600/750", // Medium-Tall
+            image: "/spotlight/landscapegreen.jpg",// Medium-Tall
         },
         {
             id: 4,
@@ -517,19 +517,19 @@ export default function PolaromaPage() {
         },
         {
             id: 5,
-            title: "Foggy Pine Ridge",
+            title: "Daytime Beach",
             creator: "@pnw.elena",
-            preset: "Matrix Portra 400",
+            preset: "Red Leak",
             category: "landscape",
-            image: "https://picsum.photos/seed/spot5/600/500", // Medium-Short
+            image: "/spotlight/beach.jpg", // Medium-Short
         },
         {
             id: 7,
-            title: "Subway Shadows",
+            title: "At the skatepark",
             creator: "@shadow.play",
-            preset: "Mono-Chroma HP5",
+            preset: "Fish Y2K",
             category: "urban",
-            image: "https://picsum.photos/seed/spot6/600/700", // Medium
+            image: "/spotlight/skate.jpg", // Medium
         },
         {
             id: 6,
@@ -625,10 +625,19 @@ export default function PolaromaPage() {
                 }}
             >
                 <button
-                    onClick={() => scrollTo('pricing')}
-                    className="flex items-center gap-2 px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white font-display font-semibold text-sm rounded-full shadow-lg glow-blue-sm transition-all duration-200 hover:scale-105 active:scale-95"
+                    onClick={() => scrollTo('spotlight')}
+                    className="group flex items-center gap-2 px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white font-display font-semibold text-sm rounded-full shadow-lg glow-blue-sm transition-all duration-200 hover:scale-105 active:scale-95"
                 >
-                    Start Editing Now
+                    <span>Start Exploring Now</span>
+                    <svg
+                        className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2.5}
+                        stroke="currentColor"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
                 </button>
             </div>
 

@@ -516,6 +516,14 @@ export default function PolaromaPage() {
             image: "/spotlight/landscapegreen.jpg",// Medium-Tall
         },
         {
+            id: 8,
+            title: "Ghost in the Backroom",
+            creator: "@chloe.beannie",
+            preset: "Ghost",
+            category: "portrait",
+            image: "/spotlight/ghost.jpg",// Medium-Tall
+        },
+        {
             id: 4,
             title: "City Life, New York",
             creator: "@jen.nguyen",
@@ -530,6 +538,14 @@ export default function PolaromaPage() {
             preset: "Red Leak",
             category: "landscape",
             image: "/spotlight/beach.jpg", // Medium-Short
+        },
+        {
+            id: 9,
+            title: "Travis Scott Burger",
+            creator: "@pckle.rick",
+            preset: "Night Vision",
+            category: "portrait",
+            image: "/spotlight/travis.jpg", // Medium-Short
         },
         {
             id: 7,
@@ -549,12 +565,6 @@ export default function PolaromaPage() {
         },
     ];
 
-    // ── Dark mode ──────────────────────────────────────────────
-    useEffect(() => {
-        document.documentElement.classList.toggle('dark', isDark)
-        // Apply light mode overrides via data attribute
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
-    }, [isDark])
 
     // ── Scroll listener ────────────────────────────────────────
     useEffect(() => {
@@ -691,13 +701,6 @@ export default function PolaromaPage() {
 
                         {/* Desktop right */}
                         <div className="hidden md:flex items-center gap-4">
-                            <button
-                                onClick={() => setIsDark((d) => !d)}
-                                className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
-                                title={isDark ? 'Switch to Light' : 'Switch to Dark'}
-                            >
-                                {isDark ? <IconMoon /> : <IconSun />}
-                            </button>
                             <button className="text-sm text-gray-300 hover:text-white transition-colors">
                                 Sign In
                             </button>
@@ -711,12 +714,6 @@ export default function PolaromaPage() {
 
                         {/* Mobile controls */}
                         <div className="flex md:hidden items-center gap-3">
-                            <button
-                                onClick={() => setIsDark((d) => !d)}
-                                className="w-9 h-9 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-400 transition-colors"
-                            >
-                                {isDark ? <IconMoon /> : <IconSun />}
-                            </button>
                             <button
                                 onClick={() => setMobileOpen((o) => !o)}
                                 className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-gray-300 transition-colors"
@@ -901,7 +898,7 @@ export default function PolaromaPage() {
             </section>
 
 
-            {/* ══ MONTHLY PHOTO SPOTLIGHT ════════════════════════════ */}
+            {/* ══ COMMUNITY PHOTO SPOTLIGHT ════════════════════════════ */}
             <section id="spotlight" className="py-24 lg:py-32 relative overflow-hidden bg-[#030712]">
                 <div className="absolute inset-0 mesh-bg pointer-events-none opacity-40" />
 
@@ -913,7 +910,7 @@ export default function PolaromaPage() {
                             Community Showcase
                         </p>
                         <h2 className="font-display font-extrabold text-4xl lg:text-5xl text-white leading-tight mb-4 reveal delay-100">
-                            Monthly Photo <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Spotlight</span>
+                            Community <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Spotlight</span>
                         </h2>
                         <p className="text-gray-400 text-base max-w-xl mx-auto reveal delay-200">
                             Photos submitted by creators, start editing to get your photos featured.

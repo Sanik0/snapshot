@@ -43,7 +43,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col flex-1 items-center justify-center font-sans bg-black">
       <main className="w-full overflow-hidden">
         <nav className="bg-neutral-primary px-0 md:px-4 flex w-full border-b border-white/10">
           <div className="w-full flex flex-wrap gap-5 items-center justify-between mx-auto p-4">

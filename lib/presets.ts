@@ -624,7 +624,7 @@ export const FILM_PRESETS: Preset[] = [
       lightLeakColor: "#ff6600",
       lightLeakPosition: "top-right",
       dust: 0,
-      dateStamp: true,
+      dateStamp: false,
       dateStampColor: "#ff6600",
       shadowTintColor: "#000000",
       highlightTintColor: "#000000",
